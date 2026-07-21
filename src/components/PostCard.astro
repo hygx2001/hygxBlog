@@ -1,5 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import PixelCover from './PixelCover.astro';
 
 interface Props {
   post: CollectionEntry<'blog'>;
@@ -11,7 +12,11 @@ const date = pubDate.toISOString().slice(0, 10);
 ---
 
 <article class="pixel-card pixel-card--hover post-card">
-  {cover && <img class="post-card__cover" src={`/attachments/${cover}`} alt={title} />}
+  {
+    cover
+      ? <img class="post-card__cover" src={`/attachments/${cover}`} alt={title} />
+      : <PixelCover class="post-card__cover" seed={post.id} />
+  }
   <div class="post-card__meta">
     <time datetime={date}>{date}</time>
     <a class="pixel-tag" href={`/categories/${encodeURIComponent(category)}/`}>{category}</a>

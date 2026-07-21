@@ -1,0 +1,67 @@
+---
+/**
+ * 像素风自动生成封面：
+ * 以文章 id 为种子，生成确定性的 identicon 风格像素图案。
+ * 同一篇文章永远得到同一张封面，无需准备图片文件。
+ * 文章 frontmatter 里写了 cover 时不会用到本组件。
+ */
+interface Props {
+  seed: string;
+  class?: string;
+}
+
+const { seed, class: className } = Astro.props;
+
+// djb2 哈希
+let h = 5381;
+for (const ch of seed) h = (Math.imul(h, 33) + ch.codePointAt(0)!) >>> 0;
+
+// mulberry32 伪随机数
+let s = h;
+const rand = () => {
+  s = (s + 0x6d2b79f5) >>> 0;
+  let t = s;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+
+// 配色盘（底色 + 3 个图案色），与主题气质一致：葱绿 / 粉 / 高级灰
+const palettes = [
+  ['#173a38', '#39c5bb', '#e8467c', '#7fe8e0'],
+  ['#1c2426', '#39c5bb', '#5a6668', '#d2d8d7'],
+  ['#241a20', '#e8467c', '#39c5bb', '#ecefef'],
+  ['#2a3234', '#7fe8e0', '#e8467c', '#39c5bb'],
+  ['#1a2e2c', '#d2d8d7', '#39c5bb', '#5a6668'],
+];
+const palette = palettes[Math.floor(rand() * palettes.length)];
+const [bg, ...inks] = palette;
+
+const W = 24;
+const H = 10;
+const HALF = W / 2;
+const rects: { x: number; y: number; fill: string }[] = [];
+
+// 左半随机填充，右半镜像（identicon 经典结构）
+for (let y = 0; y < H; y++) {
+  for (let x = 0; x < HALF; x++) {
+    if (rand() < 0.52) {
+      const fill = inks[Math.floor(rand() * inks.length)];
+      rects.push({ x, y, fill });
+      rects.push({ x: W - 1 - x, y, fill });
+    }
+  }
+}
+---
+
+<svg
+  class={className}
+  viewBox={`0 0 ${W} ${H}`}
+  preserveAspectRatio="xMidYMid slice"
+  shape-rendering="crispEdges"
+  role="img"
+  aria-hidden="true"
+>
+  <rect width={W} height={H} fill={bg} />
+  {rects.map((r) => <rect x={r.x} y={r.y} width="1" height="1" fill={r.fill} />)}
+</svg>
