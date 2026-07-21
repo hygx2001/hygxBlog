@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPublishedPosts } from '../utils/posts';
+
+const posts = await getPublishedPosts();
+
+// 按年份分组
+const byYear = new Map<number, typeof posts>();
+for (const post of posts) {
+  const year = post.data.pubDate.getFullYear();
+  if (!byYear.has(year)) byYear.set(year, []);
+  byYear.get(year)!.push(post);
+}
+const years = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
+---
+
+<BaseLayout title="时间轴">
+  <h1 class="page-title">时间轴</h1>
+  <div class="timeline">
+    {years.map(([year, list]) => (
+      <section>
+        <h2 class="timeline__year">{year}</h2>
+        {list.map((post) => (
+          <div class="timeline__item">
+            <time class="timeline__date">{post.data.pubDate.toISOString().slice(0, 10)}</time>
+            <a href={`/blog/${post.id}/`}>{post.data.title}</a>
+          </div>
+        ))}
+      </section>
+    ))}
+  </div>
+</BaseLayout>

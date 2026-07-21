@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+import { getPublishedPosts, countBy } from '../utils/posts';
+import { SITE_DESCRIPTION } from '../consts';
+
+const posts = await getPublishedPosts();
+const categoryCount = countBy(posts, (p) => [p.data.category]).length;
+const tagCount = countBy(posts, (p) => p.data.tags).length;
+---
+
+<BaseLayout>
+  <section class="hero pixel-card">
+    <span class="hero__pixels" aria-hidden="true"></span>
+    <p class="hero__eyebrow">// PIXEL · HARD-EDGE · #39C5BB</p>
+    <h1 class="hero__title">HYGX<span class="accent">BLOG</span></h1>
+    <p class="hero__desc">{SITE_DESCRIPTION}——记录前端、像素与一切有趣的东西。</p>
+    <div class="hero__actions">
+      <a class="pixel-btn" href="#latest">开始阅读 ↓</a>
+      <a class="pixel-btn" href="/timeline/">时间轴</a>
+      <span class="hero__stats">{posts.length} 篇文章 · {categoryCount} 个分类 · {tagCount} 枚标签</span>
+    </div>
+  </section>
+
+  <h1 class="page-title" id="latest">最新文章</h1>
+  <div class="post-list">
+    {posts.map((post) => <PostCard post={post} />)}
+    {posts.length === 0 && <p>还没有文章，去 src/content/blog/ 里写一篇吧。</p>}
+  </div>
+</BaseLayout>

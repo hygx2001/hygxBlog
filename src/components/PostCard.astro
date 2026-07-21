@@ -1,0 +1,35 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, category, tags, cover } = post.data;
+const date = pubDate.toISOString().slice(0, 10);
+---
+
+<article class="pixel-card pixel-card--hover post-card">
+  {cover && <img class="post-card__cover" src={`/attachments/${cover}`} alt={title} />}
+  <div class="post-card__meta">
+    <time datetime={date}>{date}</time>
+    <a class="pixel-tag" href={`/categories/${encodeURIComponent(category)}/`}>{category}</a>
+  </div>
+  <h2 class="post-card__title">
+    <a href={`/blog/${post.id}/`}>{title}</a>
+  </h2>
+  {description && <p class="post-card__desc">{description}</p>}
+  <div class="post-card__footer">
+    {
+      tags.length > 0 && (
+        <div class="post-card__tags">
+          {tags.map((tag) => (
+            <a class="pixel-tag" href={`/tags/${encodeURIComponent(tag)}/`}>#{tag}</a>
+          ))}
+        </div>
+      )
+    }
+    <a class="post-card__more" href={`/blog/${post.id}/`}>READ &gt;&gt;</a>
+  </div>
+</article>

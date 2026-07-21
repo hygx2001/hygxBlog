@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPublishedPosts, countBy } from '../../utils/posts';
+
+const posts = await getPublishedPosts();
+const tags = countBy(posts, (p) => p.data.tags);
+---
+
+<BaseLayout title="标签">
+  <h1 class="page-title">文章标签</h1>
+  <div class="chip-wall">
+    {tags.map(([name, list]) => (
+      <a class="pixel-card pixel-card--hover chip" href={`/tags/${encodeURIComponent(name)}/`}>
+        #{name}<span class="count">×{list.length}</span>
+      </a>
+    ))}
+  </div>
+</BaseLayout>

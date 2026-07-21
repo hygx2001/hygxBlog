@@ -1,0 +1,49 @@
+---
+import { SITE_TITLE } from '../consts';
+
+const path = Astro.url.pathname;
+const nav = [
+  { href: '/', label: '首页' },
+  { href: '/categories/', label: '分类' },
+  { href: '/tags/', label: '标签' },
+  { href: '/timeline/', label: '时间轴' },
+];
+---
+
+<header class="site-header">
+  <div class="container">
+    <a class="site-logo" href="/">{SITE_TITLE}</a>
+    <nav class="site-nav">
+      {nav.map((item) => (
+        <a
+          href={item.href}
+          class:list={[{ 'is-active': item.href === '/' ? path === '/' : path.startsWith(item.href) }]}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+    <div class="theme-switcher" role="group" aria-label="主题切换">
+      <button class="pixel-btn" data-set-theme="miku" title="初音主题">葱</button>
+      <button class="pixel-btn" data-set-theme="light" title="白色主题">白</button>
+      <button class="pixel-btn" data-set-theme="dark" title="黑色主题">黑</button>
+    </div>
+  </div>
+</header>
+
+<script>
+  function markActive(theme: string) {
+    document.querySelectorAll('[data-set-theme]').forEach((btn) => {
+      btn.classList.toggle('is-active', (btn as HTMLElement).dataset.setTheme === theme);
+    });
+  }
+  markActive(document.documentElement.dataset.theme || 'miku');
+  document.querySelectorAll('[data-set-theme]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const theme = (btn as HTMLElement).dataset.setTheme!;
+      document.documentElement.dataset.theme = theme;
+      localStorage.setItem('theme', theme);
+      markActive(theme);
+    });
+  });
+</script>
