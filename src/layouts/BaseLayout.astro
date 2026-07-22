@@ -1,9 +1,9 @@
 ---
-import '@fontsource/fusion-pixel-12px-monospaced-sc';
-import '@fontsource/press-start-2p';
-import '@fontsource/jetbrains-mono/400.css';
-import '@fontsource/jetbrains-mono/700.css';
+import '../styles/fonts.css';
 import '../styles/global.css';
+import fusionPixelFontUrl from '@fontsource/fusion-pixel-12px-monospaced-sc/files/fusion-pixel-12px-monospaced-sc-latin-400-normal.woff2?url';
+import pressStartFontUrl from '@fontsource/press-start-2p/files/press-start-2p-latin-400-normal.woff2?url';
+import { ClientRouter } from 'astro:transitions';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
@@ -11,33 +11,161 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 interface Props {
   title?: string;
   description?: string;
+  image?: string; // OG 图，默认 /og-default.png
+  searchable?: boolean;
 }
 
-const { title, description = SITE_DESCRIPTION } = Astro.props;
+const {
+  title,
+  description = SITE_DESCRIPTION,
+  image = '/og-default.png',
+  searchable = false,
+} = Astro.props;
 const pageTitle = title ? `${title} · ${SITE_TITLE}` : SITE_TITLE;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(image, Astro.site);
 ---
 
 <!doctype html>
-<html lang="zh-CN" data-theme="miku">
+<html lang="zh-CN" data-theme="miku" transition:animate="none">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
+    <link rel="preload" href={fusionPixelFontUrl} as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href={pressStartFontUrl} as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE_TITLE} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
     <title>{pageTitle}</title>
-    <!-- 主题初始化：在首帧渲染前读取本地存储，避免闪烁 -->
+    <!-- 客户端路由：新页面准备好后直接替换，避免整页重载产生空白帧 -->
+    <ClientRouter fallback="swap" />
+    <!-- 主题初始化：localStorage > 系统偏好 > 默认葱，首帧前执行避免闪烁 -->
+    <!-- 开机加载条已播过的话，首帧前加 no-boot 类直接隐藏，避免翻页全屏闪一下 -->
     <script is:inline>
       (() => {
-        const saved = localStorage.getItem('theme');
-        const theme = ['miku', 'light', 'dark'].includes(saved) ? saved : 'miku';
-        document.documentElement.dataset.theme = theme;
+        const themes = ['miku', 'light', 'dark', 'rin', 'luka'];
+        const applyPageState = (root) => {
+          const saved = localStorage.getItem('theme');
+          const system = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'miku';
+          root.dataset.theme = themes.includes(saved) ? saved : system;
+          if (sessionStorage.getItem('booted')) root.classList.add('no-boot');
+        };
+
+        applyPageState(document.documentElement);
+        document.addEventListener('astro:before-swap', (event) => {
+          applyPageState(event.newDocument.documentElement);
+        });
       })();
     </script>
   </head>
   <body>
+    <!-- 红白机风开机加载条：每个会话只播一次 -->
+    <div id="boot-loader" aria-hidden="true">
+      <div class="boot-box">
+        <p class="boot-title">HYGX BLOG</p>
+        <p class="boot-bar" id="boot-blocks"></p>
+        <p class="boot-hint">LOADING...</p>
+      </div>
+    </div>
     <Header />
-    <main class="container">
+    <main class="container" data-pagefind-body={searchable ? true : undefined}>
       <slot />
     </main>
     <Footer />
+
+    <!-- 开机加载条：JS 逐格填充（全局零过渡不依赖 CSS 动画） -->
+    <script is:inline>
+      (() => {
+        const loader = document.getElementById('boot-loader');
+        if (sessionStorage.getItem('booted')) {
+          loader.remove();
+          return;
+        }
+        sessionStorage.setItem('booted', '1');
+        document.body.style.overflow = 'hidden';
+        const bar = document.getElementById('boot-blocks');
+        const TOTAL = 16;
+        const cells = [];
+        for (let i = 0; i < TOTAL; i++) {
+          const cell = document.createElement('i');
+          bar.appendChild(cell);
+          cells.push(cell);
+        }
+        let n = 0;
+        const timer = setInterval(() => {
+          cells[n].classList.add('on');
+          n++;
+          if (n >= TOTAL) {
+            clearInterval(timer);
+            setTimeout(() => {
+              loader.remove();
+              document.body.style.overflow = '';
+            }, 150);
+          }
+        }, 35);
+      })();
+    </script>
+
+    <!-- 代码块复制按钮 -->
+    <script>
+      function initCopyButtons() {
+        document.querySelectorAll<HTMLElement>('.post-content pre').forEach((pre) => {
+          if (pre.querySelector('.code-copy')) return;
+
+          const btn = document.createElement('button');
+          btn.className = 'code-copy';
+          btn.textContent = 'COPY';
+          btn.type = 'button';
+          btn.addEventListener('click', async () => {
+            const code = pre.querySelector('code')?.innerText ?? pre.innerText;
+            try {
+              await navigator.clipboard.writeText(code);
+              btn.textContent = 'OK!';
+              btn.classList.add('is-done');
+            } catch {
+              btn.textContent = 'FAIL';
+            }
+            setTimeout(() => {
+              btn.textContent = 'COPY';
+              btn.classList.remove('is-done');
+            }, 1500);
+          });
+          pre.appendChild(btn);
+        });
+      }
+
+      initCopyButtons();
+      document.addEventListener('astro:page-load', initCopyButtons);
+    </script>
+
+    <!-- Konami 彩蛋：↑↑↓↓←→←→BA 反色世界 -->
+    <script is:inline>
+      (() => {
+        const SEQ = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+        let i = 0;
+        document.addEventListener('keydown', (e) => {
+          i = e.key === SEQ[i] ? i + 1 : e.key === SEQ[0] ? 1 : 0;
+          if (i < SEQ.length) return;
+          i = 0;
+          document.documentElement.classList.toggle('konami');
+          if (document.documentElement.classList.contains('konami')) {
+            const toast = document.createElement('div');
+            toast.className = 'konami-toast';
+            toast.textContent = '★ KONAMI ★';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 1600);
+          }
+        });
+      })();
+    </script>
   </body>
 </html>

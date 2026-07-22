@@ -1,13 +1,14 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import PixelCover from './PixelCover.astro';
+import { readingTime } from '../utils/posts';
 
 interface Props {
   post: CollectionEntry<'blog'>;
 }
 
 const { post } = Astro.props;
-const { title, description, pubDate, category, tags, cover } = post.data;
+const { title, description, pubDate, category, tags, cover, pinned } = post.data;
 const date = pubDate.toISOString().slice(0, 10);
 ---
 
@@ -18,7 +19,9 @@ const date = pubDate.toISOString().slice(0, 10);
       : <PixelCover class="post-card__cover" seed={post.id} />
   }
   <div class="post-card__meta">
+    {pinned && <span class="pixel-tag pixel-tag--pinned">置顶</span>}
     <time datetime={date}>{date}</time>
+    <span>约 {readingTime(post.body)} 分钟</span>
     <a class="pixel-tag" href={`/categories/${encodeURIComponent(category)}/`}>{category}</a>
   </div>
   <h2 class="post-card__title">

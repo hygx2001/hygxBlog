@@ -6,7 +6,16 @@ const nav = [
   { href: '/', label: '首页' },
   { href: '/categories/', label: '分类' },
   { href: '/tags/', label: '标签' },
+  { href: '/gallery/', label: '照片墙' },
   { href: '/timeline/', label: '时间轴' },
+];
+
+const themes = [
+  { id: 'miku', label: '葱', name: '初音' },
+  { id: 'rin', label: '铃', name: '镜音' },
+  { id: 'luka', label: '巡', name: '巡音' },
+  { id: 'light', label: '白', name: '白色' },
+  { id: 'dark', label: '黑', name: '黑色' },
 ];
 ---
 
@@ -23,27 +32,148 @@ const nav = [
         </a>
       ))}
     </nav>
+    <button class="pixel-btn search-open" type="button" aria-label="搜索">搜索</button>
     <div class="theme-switcher" role="group" aria-label="主题切换">
-      <button class="pixel-btn" data-set-theme="miku" title="初音主题">葱</button>
-      <button class="pixel-btn" data-set-theme="light" title="白色主题">白</button>
-      <button class="pixel-btn" data-set-theme="dark" title="黑色主题">黑</button>
+      {themes.map((t) => (
+        <button class="pixel-btn" data-set-theme={t.id} title={`${t.name}主题`}>{t.label}</button>
+      ))}
     </div>
   </div>
 </header>
 
-<script>
-  function markActive(theme: string) {
-    document.querySelectorAll('[data-set-theme]').forEach((btn) => {
-      btn.classList.toggle('is-active', (btn as HTMLElement).dataset.setTheme === theme);
+<!-- 搜索弹层（pagefind，构建后可用） -->
+<div id="search-modal" role="dialog" aria-label="站内搜索" hidden>
+  <div class="search-panel pixel-card">
+    <div class="search-bar">
+      <input id="search-input" type="search" placeholder="搜索文章..." autocomplete="off" />
+      <button class="pixel-btn" id="search-close" type="button">×</button>
+    </div>
+    <ul id="search-results"></ul>
+    <p id="search-status">输入关键词开始搜索 · Esc 关闭</p>
+  </div>
+</div>
+
+<!-- 事件委托只绑定一次；页面替换后重新标记当前主题 -->
+<script is:inline>
+  (() => {
+    const markActive = (theme) => {
+      document.querySelectorAll('[data-set-theme]').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.dataset.setTheme === theme);
+      });
+    };
+
+    markActive(document.documentElement.dataset.theme || 'miku');
+    document.addEventListener('astro:page-load', () => {
+      markActive(document.documentElement.dataset.theme || 'miku');
     });
-  }
-  markActive(document.documentElement.dataset.theme || 'miku');
-  document.querySelectorAll('[data-set-theme]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const theme = (btn as HTMLElement).dataset.setTheme!;
+    document.addEventListener('click', (event) => {
+      const btn = event.target instanceof Element ? event.target.closest('[data-set-theme]') : null;
+      if (!(btn instanceof HTMLElement)) return;
+
+      const theme = btn.dataset.setTheme;
+      if (!theme) return;
       document.documentElement.dataset.theme = theme;
       localStorage.setItem('theme', theme);
       markActive(theme);
     });
+  })();
+</script>
+
+<script is:inline>
+  let pagefind = null;
+  let triedLoad = false;
+  let debounce;
+
+  async function ensurePagefind(status) {
+    if (pagefind || triedLoad) return;
+    triedLoad = true;
+    try {
+      // pagefind 索引由构建期 postbuild 生成，dev 下不存在；
+      // 由浏览器运行时加载 postbuild 生成的索引模块
+      pagefind = await import('/pagefind/pagefind.js');
+      await pagefind.init();
+    } catch {
+      status.textContent = '搜索索引未生成：执行 npm run build 后可用';
+    }
+  }
+
+  function openModal() {
+    const modal = document.getElementById('search-modal');
+    const input = document.getElementById('search-input');
+    if (!modal || !input) return;
+    modal.hidden = false;
+    input.focus();
+    const status = document.getElementById('search-status');
+    if (status) ensurePagefind(status);
+  }
+
+  function closeModal() {
+    const modal = document.getElementById('search-modal');
+    const input = document.getElementById('search-input');
+    const list = document.getElementById('search-results');
+    const status = document.getElementById('search-status');
+    if (!modal || !input || !list || !status) return;
+    modal.hidden = true;
+    input.value = '';
+    list.innerHTML = '';
+    status.textContent = '输入关键词开始搜索 · Esc 关闭';
+  }
+
+  async function runSearch(input) {
+    const list = document.getElementById('search-results');
+    const status = document.getElementById('search-status');
+    if (!list || !status) return;
+    const q = input.value;
+    if (!pagefind) return;
+    if (!q.trim()) {
+      list.innerHTML = '';
+      status.textContent = '输入关键词开始搜索 · Esc 关闭';
+      return;
+    }
+    status.textContent = '搜索中...';
+    const search = await pagefind.search(q);
+    const results = await Promise.all(search.results.slice(0, 8).map((r) => r.data()));
+    if (results.length === 0) {
+      list.innerHTML = '';
+      status.textContent = '没有找到相关内容';
+      return;
+    }
+    status.textContent = `${search.results.length} 条结果`;
+    list.innerHTML = results
+      .map(
+        (r) => `
+        <li>
+          <a href="${r.url}">
+            <strong>${r.meta?.title ?? r.url}</strong>
+            <span>${r.excerpt}</span>
+          </a>
+        </li>`,
+      )
+      .join('');
+  }
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest('.search-open')) openModal();
+    if (target.closest('#search-close') || target.matches('#search-modal') || target.closest('#search-results a')) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener('input', (event) => {
+    if (!(event.target instanceof HTMLInputElement) || event.target.id !== 'search-input') return;
+    clearTimeout(debounce);
+    debounce = setTimeout(() => runSearch(event.target), 200);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    const modal = document.getElementById('search-modal');
+    if (!modal) return;
+    if (event.key === '/' && modal.hidden && !(event.target instanceof HTMLInputElement)) {
+      event.preventDefault();
+      openModal();
+    }
+    if (event.key === 'Escape' && !modal.hidden) closeModal();
   });
 </script>

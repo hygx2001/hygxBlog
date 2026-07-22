@@ -1,37 +1,116 @@
 ---
 import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getPublishedPosts } from '../../utils/posts';
+import { getPublishedPosts, readingTime } from '../../utils/posts';
 
 export async function getStaticPaths() {
-  const posts = await getPublishedPosts();
-  return posts.map((post) => ({
+  // 相邻导航按时间线走（不含置顶干预）
+  const posts = (await getPublishedPosts()).sort(
+    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+  );
+  return posts.map((post, i) => ({
     params: { id: post.id },
-    props: { post },
+    props: {
+      post,
+      prev: posts[i - 1] ?? null, // 更新的
+      next: posts[i + 1] ?? null, // 更早的
+    },
   }));
 }
 
-const { post } = Astro.props;
-const { title, description, pubDate, updatedDate, category, tags } = post.data;
-const { Content } = await render(post);
+const { post, prev, next } = Astro.props;
+const { title, description, pubDate, updatedDate, category, tags, cover } = post.data;
+const { Content, headings } = await render(post);
 const date = pubDate.toISOString().slice(0, 10);
+const minutes = readingTime(post.body);
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout
+  title={title}
+  description={description}
+  image={cover ? `/attachments/${cover}` : undefined}
+  searchable
+>
   <article class="pixel-card post-article">
     <header class="post-article__header">
       <h1>{title}</h1>
       <div class="post-card__meta">
         <time datetime={date}>发布于 {date}</time>
         {updatedDate && <span>更新于 {updatedDate.toISOString().slice(0, 10)}</span>}
+        <span>约 {minutes} 分钟</span>
         <a class="pixel-tag" href={`/categories/${encodeURIComponent(category)}/`}>{category}</a>
         {tags.map((tag) => (
           <a class="pixel-tag" href={`/tags/${encodeURIComponent(tag)}/`}>#{tag}</a>
         ))}
       </div>
     </header>
+
+    {
+      toc.length > 1 && (
+        <nav class="post-toc" aria-label="目录">
+          <p class="post-toc__title">目录</p>
+          <ul>
+            {toc.map((h) => (
+              <li class={`post-toc__item post-toc__item--d${h.depth}`}>
+                <a href={`#${h.slug}`}>{h.text}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+
     <div class="post-content">
       <Content />
     </div>
+
+    <nav class="post-pager" aria-label="文章导航">
+      {prev ? (
+        <a class="pixel-btn" href={`/blog/${prev.id}/`}>← 上一篇<br /><small>{prev.data.title}</small></a>
+      ) : <span />}
+      {next ? (
+        <a class="pixel-btn post-pager__next" href={`/blog/${next.id}/`}>下一篇 →<br /><small>{next.data.title}</small></a>
+      ) : <span />}
+    </nav>
   </article>
+
+  <!-- 正文图片放大检视 -->
+  <div id="img-zoom" hidden><img alt="" /></div>
 </BaseLayout>
+
+<script>
+  let imageZoomController: AbortController | undefined;
+
+  function initImageZoom() {
+    imageZoomController?.abort();
+    imageZoomController = new AbortController();
+    const { signal } = imageZoomController;
+    const zoom = document.getElementById('img-zoom');
+    if (!zoom) return;
+    const zoomImg = zoom.querySelector('img');
+    if (!zoomImg) return;
+
+    const close = () => {
+      zoom.hidden = true;
+      document.body.classList.remove('gallery-focus');
+    };
+
+    document.querySelectorAll<HTMLImageElement>('.post-content img').forEach((img) => {
+      img.style.cursor = 'zoom-in';
+      img.addEventListener('click', () => {
+        zoomImg.src = img.src;
+        zoomImg.alt = img.alt;
+        zoom.hidden = false;
+        document.body.classList.add('gallery-focus'); // 复用：锁定滚动
+      }, { signal });
+    });
+    zoom.addEventListener('click', close, { signal });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !zoom.hidden) close();
+    }, { signal });
+  }
+
+  initImageZoom();
+  document.addEventListener('astro:page-load', initImageZoom);
+</script>
