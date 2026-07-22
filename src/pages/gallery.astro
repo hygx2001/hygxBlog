@@ -1,0 +1,205 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+// 按年月倒序
+const groups = (await getCollection('photos')).sort(
+  (a, b) => b.data.year * 100 + b.data.month - (a.data.year * 100 + a.data.month),
+);
+
+// 简单的确定性伪随机：让每张照片有固定的倾斜角（-3.5deg ~ 3.5deg）
+function tiltOf(seed: string) {
+  let h = 5381;
+  for (const ch of seed) h = (Math.imul(h, 33) + ch.codePointAt(0)!) >>> 0;
+  return ((h % 1000) / 1000 - 0.5) * 7;
+}
+
+const groupsWithContent = await Promise.all(
+  groups.map(async (group) => ({ group, Content: (await render(group)).Content })),
+);
+---
+
+<BaseLayout title="照片墙">
+  <h1 class="page-title">照片墙</h1>
+  <div class="gallery">
+    {
+      groupsWithContent.map(({ group, Content }) => (
+        <section class="gallery__group">
+          <h2 class="gallery__month">
+            {group.data.year} / {String(group.data.month).padStart(2, '0')}
+            <span class="gallery__count">{group.data.photos.length} 张</span>
+          </h2>
+          <div class="gallery__intro post-content">
+            <Content />
+          </div>
+          <div class="gallery__grid">
+            {group.data.photos.map((photo) => (
+              <figure class="photo-item" style={`--tilt: ${tiltOf(photo.src).toFixed(2)}deg`}>
+                <img src={`/attachments/${photo.src}`} alt={photo.title} loading="lazy" />
+                <figcaption>
+                  <strong>{photo.title}</strong>
+                  {photo.note && <span>{photo.note}</span>}
+                  {photo.date && (
+                    <time class="photo-item__date" datetime={photo.date.toISOString().slice(0, 10)}>
+                      {photo.date.toISOString().slice(0, 10).replaceAll('-', '.')}
+                    </time>
+                  )}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      ))
+    }
+    {groups.length === 0 && <p>还没有照片，去 src/content/photos/ 里建一个「年-月」md 文件吧。</p>}
+  </div>
+  <!-- 检视模式遮罩：点击照片外区域退出 -->
+  <div id="gallery-overlay" aria-hidden="true"></div>
+  <p id="gallery-hint" aria-hidden="true">← → 切换 · Esc / 点击外部退出</p>
+</BaseLayout>
+
+<script>
+  let galleryController: AbortController | undefined;
+
+  function initGallery() {
+    galleryController?.abort();
+    galleryController = new AbortController();
+    const { signal } = galleryController;
+    const overlay = document.getElementById('gallery-overlay');
+    if (!overlay) return;
+
+    let active: HTMLElement | null = null;
+    let originRect: DOMRect | null = null;
+    let originTilt = '0deg';
+    let flight: Animation | null = null;
+    let busy = false;
+
+    const EASE = 'cubic-bezier(0.2, 0.7, 0.2, 1)';
+    const FLIP = 360; // 翻转 + 旋转一整圈
+
+    type Rect = { top: number; left: number; width: number; height: number };
+
+    /** 目标尺寸：面积 ≈ 视口的 50%，保持原始宽高比，且不超出视口 92% */
+    function targetRect(aspect: number): Rect {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      let w = Math.sqrt(0.5 * vw * vh * aspect);
+      let h = w / aspect;
+      if (w > vw * 0.92) { w = vw * 0.92; h = w / aspect; }
+      if (h > vh * 0.92) { h = vh * 0.92; w = h * aspect; }
+      return { top: (vh - h) / 2, left: (vw - w) / 2, width: w, height: h };
+    }
+
+    function rectStyles(r: Rect) {
+      return { top: `${r.top}px`, left: `${r.left}px`, width: `${r.width}px`, height: `${r.height}px` };
+    }
+
+    /** 伪 3D 检视：鼠标位置映射为 rotateX / rotateY */
+    function onMouseMove(e: MouseEvent) {
+      if (!active || !active.classList.contains('is-settled')) return;
+      const rx = (0.5 - e.clientY / window.innerHeight) * 18;
+      const ry = (e.clientX / window.innerWidth - 0.5) * 24;
+      active.style.transform =
+        `perspective(1000px) rotate(${FLIP}deg) rotateX(${rx.toFixed(2)}deg) rotateY(${FLIP + ry}deg)`;
+    }
+
+    function openFocus(item: HTMLElement) {
+      if (active || busy) return;
+      busy = true;
+      active = item;
+      originRect = item.getBoundingClientRect();
+      originTilt = item.style.getPropertyValue('--tilt') || '0deg';
+
+      // 钉在当前位置（fixed 定位到原 rect）
+      Object.assign(item.style, rectStyles(originRect), {
+        position: 'fixed',
+        margin: '0',
+        zIndex: '70', // 高于遮罩（60），内联样式优先级最高
+      });
+      item.classList.add('is-focused');
+      document.body.classList.add('gallery-focus');
+
+      const t = targetRect(originRect.width / originRect.height);
+      const endTransform = `perspective(1000px) rotate(${FLIP}deg) rotateX(0deg) rotateY(${FLIP}deg)`;
+
+      // WAAPI 进场：飞入中央 + 翻转旋转
+      flight = item.animate(
+        [
+          { ...rectStyles(originRect), transform: `rotate(${originTilt})` },
+          { ...rectStyles(t), transform: endTransform },
+        ],
+        { duration: 550, easing: EASE, fill: 'forwards' },
+      );
+      flight.onfinish = () => {
+        // 落地：提交内联终态后取消动画（无跳变），进入检视态
+        Object.assign(item.style, rectStyles(t), { transform: endTransform });
+        flight?.cancel();
+        flight = null;
+        item.classList.add('is-settled');
+        busy = false;
+      };
+
+      document.addEventListener('mousemove', onMouseMove, { signal });
+    }
+
+    function closeFocus(onDone?: () => void) {
+      if (!active || busy) return;
+      busy = true;
+      const item = active;
+      const rect = originRect!;
+      const tilt = originTilt;
+      active = null;
+      item.classList.remove('is-settled');
+      item.style.pointerEvents = 'none'; // 退出途中不响应悬停
+      document.removeEventListener('mousemove', onMouseMove);
+
+      // WAAPI 退场：从当前位姿飞回原位（终点与 CSS 静态状态一致）
+      const current = item.getBoundingClientRect();
+      const currentTransform = item.style.transform || `rotate(${tilt})`;
+      flight = item.animate(
+        [
+          { ...rectStyles(current), transform: currentTransform },
+          { ...rectStyles(rect), transform: `rotate(${tilt})` },
+        ],
+        { duration: 550, easing: EASE, fill: 'forwards' },
+      );
+      flight.onfinish = () => {
+        flight?.cancel();
+        flight = null;
+        item.classList.remove('is-focused');
+        item.removeAttribute('style');
+        item.style.setProperty('--tilt', tilt); // 恢复倾斜角变量（removeAttribute 会一并清掉）
+        document.body.classList.remove('gallery-focus');
+        busy = false;
+        onDone?.();
+      };
+    }
+
+    // 检视中 ← → 切换上/下一张
+    const items = [...document.querySelectorAll<HTMLElement>('.photo-item')];
+    function step(dir: 1 | -1) {
+      if (!active || busy) return;
+      const idx = items.indexOf(active);
+      const next = items[(idx + dir + items.length) % items.length];
+      closeFocus(() => openFocus(next));
+    }
+
+    document.querySelectorAll<HTMLElement>('.photo-item').forEach((item) => {
+      item.addEventListener('click', () => {
+        if (item === active) return; // 点击照片本身不退出
+        openFocus(item);
+      }, { signal });
+    });
+    overlay.addEventListener('click', () => closeFocus(), { signal });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeFocus();
+      if (active && active.classList.contains('is-settled')) {
+        if (e.key === 'ArrowRight') step(1);
+        if (e.key === 'ArrowLeft') step(-1);
+      }
+    }, { signal });
+  }
+
+  initGallery();
+  document.addEventListener('astro:page-load', initGallery);
+</script>
