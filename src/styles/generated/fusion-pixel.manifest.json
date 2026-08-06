@@ -1,0 +1,213 @@
+{
+  "family": "Fusion Pixel 12px Monospaced SC",
+  "sourceSha256": "f575880b7c6206305d2fea94e323661aed1a119caa0528f7305a7c3f317aad2e",
+  "toolVersion": "7.4.3",
+  "optionsSha256": "2ca0fb89080d33b976dffda9c713c28dfb6a2dfd2d067163fa070ad14b7e81b4",
+  "generatedAt": "2026-08-06T06:29:19.195Z",
+  "publicPrefix": "/fonts/fusion-pixel-12px-monospaced-sc/",
+  "coverage": {
+    "codepoints": 31345,
+    "chunks": 49
+  },
+  "preload": [
+    "/fonts/fusion-pixel-12px-monospaced-sc/64fee36eacf108a10b656dd4ccd07459.woff2"
+  ],
+  "files": [
+    {
+      "name": "0143016e7038bed304a455f44e45adc5.woff2",
+      "bytes": 2532
+    },
+    {
+      "name": "02c923e2734e3abf4e9ad84b2dd3a555.woff2",
+      "bytes": 33684
+    },
+    {
+      "name": "065d7e9d778203c0ed1c68fbae02a903.woff2",
+      "bytes": 46652
+    },
+    {
+      "name": "0da308ab747365732d07843b73e2cbd6.woff2",
+      "bytes": 2020
+    },
+    {
+      "name": "0e787413cc7f3605c1bf449079754593.woff2",
+      "bytes": 22348
+    },
+    {
+      "name": "138ae6caca7ce698b0f6d1eb748579af.woff2",
+      "bytes": 2360
+    },
+    {
+      "name": "14140242399d18637093f0da18895160.woff2",
+      "bytes": 4676
+    },
+    {
+      "name": "14c1eb734ac6c4c5df68c1a1ce4e23f2.woff2",
+      "bytes": 38000
+    },
+    {
+      "name": "14f373b3af9de5c82168d7869e867c8e.woff2",
+      "bytes": 53900
+    },
+    {
+      "name": "15d2249b02b2afdff3e731433d733022.woff2",
+      "bytes": 21964
+    },
+    {
+      "name": "16ab2d4bc8f8002ad12aeb6d42c47f4a.woff2",
+      "bytes": 41484
+    },
+    {
+      "name": "1be0109ddd3eeee9ee0e577c3f846b5a.woff2",
+      "bytes": 35528
+    },
+    {
+      "name": "1dca3695f27f57f987f6726b4a83f128.woff2",
+      "bytes": 14520
+    },
+    {
+      "name": "1dd6e27702a642296c26eb0392287df2.woff2",
+      "bytes": 2892
+    },
+    {
+      "name": "2869caddf48edfc1b8be77daade8000b.woff2",
+      "bytes": 1996
+    },
+    {
+      "name": "29922e802d2e10028939f16a68396535.woff2",
+      "bytes": 18316
+    },
+    {
+      "name": "315e2f9f1d7ae6ac7be42da02f0c6278.woff2",
+      "bytes": 46672
+    },
+    {
+      "name": "37e7be2582f1586c344507a2e13ea0ab.woff2",
+      "bytes": 33772
+    },
+    {
+      "name": "58b3a98a922289ec8f54b1a643ff2ae8.woff2",
+      "bytes": 23348
+    },
+    {
+      "name": "5d724e4d9b0c1a87ee11d47d56271c52.woff2",
+      "bytes": 23872
+    },
+    {
+      "name": "6475d7e011ed1608b3dffce61389e998.woff2",
+      "bytes": 17804
+    },
+    {
+      "name": "64fee36eacf108a10b656dd4ccd07459.woff2",
+      "bytes": 2808
+    },
+    {
+      "name": "6762896c40e5c148e3ba427c30be8591.woff2",
+      "bytes": 33616
+    },
+    {
+      "name": "73f853ad27b311dba3f0acd0ef09eae7.woff2",
+      "bytes": 45084
+    },
+    {
+      "name": "7928787d13f1a1f148db8ed0e10e8a72.woff2",
+      "bytes": 24644
+    },
+    {
+      "name": "84c1ad7d928afa2911235eba52f1505e.woff2",
+      "bytes": 39952
+    },
+    {
+      "name": "85ee9c4ad5814a30fb5c4dbcfb72a57b.woff2",
+      "bytes": 12104
+    },
+    {
+      "name": "8c3e01eec1127a3973efc9a77e848fd7.woff2",
+      "bytes": 25092
+    },
+    {
+      "name": "8cc23e3dee00ff37a7b97fb994a77750.woff2",
+      "bytes": 49128
+    },
+    {
+      "name": "99808fc93e176f6c483061d9eb40e9cb.woff2",
+      "bytes": 14772
+    },
+    {
+      "name": "9b58f207b595ea6c1687fc0290303b14.woff2",
+      "bytes": 21608
+    },
+    {
+      "name": "a240ce4be202d35d6dabd07bfb64d2ff.woff2",
+      "bytes": 47684
+    },
+    {
+      "name": "a40ae81d493927a460406ea41c496649.woff2",
+      "bytes": 13420
+    },
+    {
+      "name": "a9517d5e8d97f05769b7585e064ed892.woff2",
+      "bytes": 41608
+    },
+    {
+      "name": "b0cd18782ce0e0cd31cb1edae8cf7302.woff2",
+      "bytes": 6912
+    },
+    {
+      "name": "ba43ff73a78af8d48acf402eed4cdc20.woff2",
+      "bytes": 15484
+    },
+    {
+      "name": "bace24f65038b7f17c91430aba4b92b3.woff2",
+      "bytes": 25568
+    },
+    {
+      "name": "bba60649192aaee704df3fbc8cc21431.woff2",
+      "bytes": 26200
+    },
+    {
+      "name": "bc5bc861074be86977b38cca8b7e6e12.woff2",
+      "bytes": 48620
+    },
+    {
+      "name": "c33803c3636a8bf5b74b224d30e7e879.woff2",
+      "bytes": 45548
+    },
+    {
+      "name": "cb0503415d7234ab30c6a66cecfeb42b.woff2",
+      "bytes": 41200
+    },
+    {
+      "name": "cc533b970a0ad6cda6fd9dfcef072741.woff2",
+      "bytes": 43380
+    },
+    {
+      "name": "d21d7b2b14ea403b4db4516ec7c7c886.woff2",
+      "bytes": 50764
+    },
+    {
+      "name": "d58f2706990b0e8984203af11b86c533.woff2",
+      "bytes": 12988
+    },
+    {
+      "name": "e1f96d067d1639b322cbccb4a119c9d9.woff2",
+      "bytes": 1504
+    },
+    {
+      "name": "e63d78cd61511424b8f341d531af3190.woff2",
+      "bytes": 28676
+    },
+    {
+      "name": "e79392669b0a429d4d337911300f3da3.woff2",
+      "bytes": 38056
+    },
+    {
+      "name": "eeb541a98b11a071f76b986421575d74.woff2",
+      "bytes": 28244
+    },
+    {
+      "name": "fc028d1a9065b5a46b01dd1ed94ca60a.woff2",
+      "bytes": 36720
+    }
+  ]
+}

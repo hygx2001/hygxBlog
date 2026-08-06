@@ -37,6 +37,9 @@
 }
 
 :root[data-theme='dark'] {
+  /* 告诉浏览器原生控件也走暗色：否则常驻滚动条和 <input type="search">
+     的清除按钮会在暗背景上渲染成亮色 */
+  color-scheme: dark;
   --bg: #15181b;
   --bg-soft: #1e2226;
   --bg-inset: #101316;
@@ -117,8 +120,14 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  transition: none !important; /* 像素风：零过渡 */
-  animation-duration: 0s !important;
+}
+
+/* 像素风：零过渡。
+   用 :where() 让特异性归零 —— 少数需要过渡的地方（照片墙、检视遮罩）
+   直接写 transition 就能覆盖，不必再用 !important 对轰。 */
+:where(*, *::before, *::after) {
+  transition: none;
+  animation-duration: 0s;
 }
 
 html {
@@ -129,6 +138,7 @@ html {
 
 body {
   margin: 0;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='24' shape-rendering='crispEdges'%3E%3Cpolygon points='1,1 1,21 7,15 11,23 15,21 11,13 19,13' fill='%231c2426' stroke='%23ffffff' stroke-width='2'/%3E%3C/svg%3E") 2 2, auto;
   font-family: var(--font-pixel);
   font-size: 1rem;
   line-height: 1.9;
@@ -171,6 +181,55 @@ code, pre {
 :focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* 只给读屏器的文字：视觉上不可见，但不会被 display:none 从无障碍树里摘掉 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 跳到正文：键盘用户每页第一个 Tab，免得先穿过 logo + 5 个导航 + 搜索 + 5 个主题按钮 */
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -100px;
+  z-index: 300;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 3px solid var(--border);
+  clip-path: var(--cut-sm);
+}
+.skip-link:focus {
+  top: 8px;
+}
+
+/* 尊重系统「减弱动态效果」。画廊的飞行动画是 WAAPI，管不到，已在 gallery.astro 里另行判断。 */
+@media (prefers-reduced-motion: reduce) {
+  :where(*, *::before, *::after) {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .photo-item:hover {
+    transform: rotate(var(--tilt, 0deg));
+  }
+}
+
+/* 归档页页码信息 */
+.archive-meta {
+  margin: -8px 0 20px;
+  font-size: 0.8rem;
+  color: var(--ink-dim);
 }
 
 /* ---------- 布局骨架 ---------- */
@@ -509,6 +568,10 @@ a.pixel-tag:hover {
 
 .post-content img {
   display: block;
+  /* 配合 <img> 上的 width/height：height:auto 让浏览器按宽高比预留空间（消除 CLS），
+     max-width 兜住比正文栏宽的图。缺任一条，尺寸属性反而会把图撑到原始像素宽。 */
+  max-width: 100%;
+  height: auto;
   margin: 20px auto;
   border: 3px solid var(--border);
   clip-path: var(--cut-sm);
@@ -526,6 +589,7 @@ a.pixel-tag:hover {
 }
 
 .post-content pre {
+  position: relative;
   padding: 16px;
   border: 3px solid var(--border);
   clip-path: var(--cut-sm);
@@ -676,6 +740,8 @@ a.pixel-tag:hover {
 .gallery__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  /* 每张照片按自身高度排版，避免同一行被最高的照片拉伸 */
+  align-items: start;
   gap: 28px;
   padding-top: 16px;
 }
@@ -688,7 +754,7 @@ a.pixel-tag:hover {
   z-index: 40;
   background: rgba(10, 12, 14, 0);
   pointer-events: none;
-  transition: background 0.25s ease-out !important; /* 覆盖全局零过渡 */
+  transition: background 0.25s ease-out;
 }
 
 .gallery:has(.photo-item:hover)::after {
@@ -704,6 +770,7 @@ body.gallery-focus .gallery::after {
 .photo-item {
   position: relative;
   z-index: 1;
+  cursor: zoom-in;
   margin: 0;
   padding: 12px 12px 0;
   background: #f7f5ee; /* 照相纸白 */
@@ -711,14 +778,15 @@ body.gallery-focus .gallery::after {
   clip-path: var(--cut-sm);
   filter: drop-shadow(6px 6px 0 var(--shadow));
   transform: rotate(var(--tilt, 0deg));
-  transition: transform 0.25s ease-out, filter 0.25s ease-out, opacity 0.25s ease-out !important;
+  transition: transform 0.25s ease-out, filter 0.25s ease-out, opacity 0.25s ease-out;
 }
 
 .photo-item img {
   display: block;
   width: 100%;
-  aspect-ratio: 3 / 2;
-  object-fit: cover;
+  /* width/height 属性用来预留空间；这里必须显式让高度随宽度缩放。
+     否则 1000×1000 图片会在 230px 宽的卡片里仍占 1000px 高。 */
+  height: auto;
   border: 2px solid #1c2426;
   background: #d2d8d7;
 }
@@ -752,7 +820,7 @@ body.gallery-focus .gallery::after {
   letter-spacing: 1px;
   color: #d9704a; /* 胶片日期戳的橙红色 */
   opacity: 0;
-  transition: opacity 0.3s ease-out !important;
+  transition: opacity 0.3s ease-out;
 }
 
 .photo-item.is-settled .photo-item__date {
@@ -771,8 +839,10 @@ body.gallery-focus .gallery::after {
   filter: drop-shadow(12px 14px 0 var(--accent));
 }
 
-.photo-item {
-  cursor: zoom-in;
+/* will-change 只在真的要动的那一刻给。挂在 .photo-item 上会让每张照片
+   长期各占一个合成层，照片一多就是白白的 GPU 内存和绘制开销。 */
+.photo-item:hover,
+.photo-item.is-focused {
   will-change: transform;
 }
 
@@ -784,7 +854,7 @@ body.gallery-focus .gallery::after {
   background: rgba(10, 12, 14, 0.62); /* 与悬浮压暗保持一致 */
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease-out !important;
+  transition: opacity 0.3s ease-out;
 }
 
 body.gallery-focus {
@@ -811,14 +881,10 @@ body.gallery-focus .photo-item:not(.is-focused) {
 
 /* 检视态：倾斜跟随要快，只过渡 transform */
 .photo-item.is-focused.is-settled {
-  transition: transform 0.12s ease-out !important;
+  transition: transform 0.12s ease-out;
 }
 
 /* ---------- 像素光标 ---------- */
-body {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='24' shape-rendering='crispEdges'%3E%3Cpolygon points='1,1 1,21 7,15 11,23 15,21 11,13 19,13' fill='%231c2426' stroke='%23ffffff' stroke-width='2'/%3E%3C/svg%3E") 2 2, auto;
-}
-
 a, button, [role='button'], input[type='search'] {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='24' shape-rendering='crispEdges'%3E%3Cpolygon points='1,1 1,21 7,15 11,23 15,21 11,13 19,13' fill='%2339c5bb' stroke='%231c2426' stroke-width='2'/%3E%3C/svg%3E") 2 2, pointer;
 }
@@ -831,6 +897,17 @@ a, button, [role='button'], input[type='search'] {
   display: grid;
   place-items: center;
   background: var(--bg);
+  /* 纯 CSS 最后一道保险：若 JS 开机脚本根本没有执行，3 秒后也必须
+     让出页面。正常情况下脚本会在约 0.7 秒时直接移除该节点。 */
+  animation: boot-failsafe 0.001s 3s forwards;
+}
+
+@keyframes boot-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 /* 已播过开机动画：首帧渲染前（head 内联脚本加类）即隐藏 */
@@ -925,12 +1002,13 @@ html.konami body {
   color: var(--ink);
   background: var(--bg-inset);
   border: 3px solid var(--border);
-  outline: none;
 }
 
 .search-bar input:focus {
   border-color: var(--accent);
 }
+/* 这里原来有 outline: none —— 只靠边框换色的焦点提示对低视力用户几乎不可见，
+   已移除，让全局 :focus-visible 的轮廓生效。 */
 
 #search-results {
   list-style: none;
@@ -1039,10 +1117,6 @@ html.konami body {
 }
 
 /* ---------- 代码块复制按钮 ---------- */
-.post-content pre {
-  position: relative;
-}
-
 .code-copy {
   position: absolute;
   top: 8px;

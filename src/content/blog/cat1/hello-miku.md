@@ -1,10 +1,14 @@
 ---
 title: 你好，像素世界
 description: 第一篇文章：这个博客是怎么搭起来的。
-pubDate: 2026-07-01
+pubDate: '2026-07-01'
 category: 随笔
-tags: [像素风, 博客, 初音未来]
-pinned: true
+tags:
+  - 像素风
+  - 博客
+  - 初音未来
+draft: false
+pinned: false
 ---
 
 欢迎来到 **HYGX BLOG** —— 一个像素风格的 Astro 博客。

@@ -5,6 +5,9 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
+    "editor": "npm --prefix hygx-editor start",
+    "fonts:build": "node scripts/build-fonts.mjs",
+    "prebuild": "node scripts/verify-site.mjs && node scripts/verify-fonts.mjs",
     "build": "astro build",
     "postbuild": "pagefind --site dist",
     "preview": "astro preview",
@@ -23,8 +26,10 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "cn-font-split": "^7.4.3",
     "pagefind": "^1.5.2",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "wawoff2": "^2.0.1"
   },
   "allowScripts": {
     "esbuild@0.28.1": true,

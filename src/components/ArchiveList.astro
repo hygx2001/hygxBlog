@@ -1,0 +1,42 @@
+---
+/**
+ * 归档列表主体，/blog/ 与 /blog/page/N/ 共用。
+ * 抽出来是因为两条路由不能都用 rest 参数（会和 [...id].astro 撞车），
+ * 只能拆成两个页面，但渲染逻辑必须是同一份。
+ */
+import type { CollectionEntry } from 'astro:content';
+import PostCard from './PostCard.astro';
+
+interface Props {
+  posts: CollectionEntry<'blog'>[];
+  total: number;
+  currentPage: number;
+  lastPage: number;
+}
+
+const { posts, total, currentPage, lastPage } = Astro.props;
+
+/** 第 1 页在 /blog/，其余在 /blog/page/N/ */
+const pageHref = (n: number) => (n === 1 ? '/blog/' : `/blog/page/${n}/`);
+---
+
+<h1 class="page-title">全部文章</h1>
+<p class="archive-meta">共 {total} 篇 · 第 {currentPage} / {lastPage} 页</p>
+
+<div class="post-list">
+  {posts.map((post, i) => <PostCard post={post} eager={currentPage === 1 && i === 0} />)}
+  {posts.length === 0 && <p>还没有文章，去 src/content/blog/ 里写一篇吧。</p>}
+</div>
+
+{
+  lastPage > 1 && (
+    <nav class="post-pager" aria-label="分页导航">
+      {currentPage > 1 ? (
+        <a class="pixel-btn" href={pageHref(currentPage - 1)} rel="prev">← 上一页</a>
+      ) : <span />}
+      {currentPage < lastPage ? (
+        <a class="pixel-btn post-pager__next" href={pageHref(currentPage + 1)} rel="next">下一页 →</a>
+      ) : <span />}
+    </nav>
+  )
+}

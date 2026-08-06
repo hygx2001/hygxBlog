@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="miku">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>附件管理 · HYGX EDITOR</title>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <span class="brand">HYGX EDITOR</span>
+      <span class="blogdir">附件管理</span>
+    </header>
+
+    <div class="pg-wrap">
+      <div class="pg-head">
+        <span class="pg-title">附件管理</span>
+        <label class="attach-upload">
+          <span class="btn">+ 上传图片</span>
+          <input type="file" accept="image/*" multiple id="attach-upload-input" hidden />
+        </label>
+        <span class="attach-count" id="attach-count"></span>
+        <a href="index.html" class="pg-back">← 返回编辑器</a>
+      </div>
+      <div id="attach-grid" class="attach-grid"></div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <script type="module">
+      const $ = (s) => document.querySelector(s);
+      const $$ = (s) => document.querySelectorAll(s);
+
+      let attachments = [];
+
+      async function api(url, opts = {}) {
+        const res = await fetch(url, opts);
+        return res.json();
+      }
+      function toast(msg) {
+        const t = $('#toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 1600);
+      }
+
+      async function loadAttachments() {
+        attachments = await api('/api/attachments');
+        return attachments;
+      }
+
+      async function uploadFiles(files) {
+        const fd = new FormData();
+        [...files].forEach((f) => fd.append('file', f));
+        const { files: names, error } = await api('/api/upload', { method: 'POST', body: fd });
+        if (error) { toast('上传失败'); return []; }
+        await loadAttachments();
+        return names || [];
+      }
+
+      async function loadGrid() {
+        await loadAttachments();
+        const grid = $('#attach-grid');
+        const count = $('#attach-count');
+        if (!attachments.length) {
+          count.textContent = '暂无附件';
+          grid.innerHTML = '<div class="attach-empty">还没有图片附件，点击右上角「上传图片」添加</div>';
+          return;
+        }
+        count.textContent = `${attachments.length} 张`;
+        grid.innerHTML = attachments.map((f) => `
+          <div class="attach-item" data-file="${f}">
+            <img src="/attachments/${f}" alt="${f}" loading="lazy" />
+            <span class="attach-name" title="${f}">${f}</span>
+            <div class="attach-actions">
+              <button class="attach-copy" title="复制文件名">复制</button>
+              <button class="attach-del" title="删除">删除</button>
+            </div>
+          </div>
+        `).join('');
+
+        grid.querySelectorAll('.attach-copy').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const file = btn.closest('.attach-item').dataset.file;
+            try {
+              await navigator.clipboard.writeText(`![[${file}]]`);
+              toast('已复制 ![[文件名]]');
+            } catch {
+              toast('复制失败，请手动复制');
+            }
+          });
+        });
+
+        grid.querySelectorAll('.attach-del').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const item = btn.closest('.attach-item');
+            const file = item.dataset.file;
+            if (!confirm(`确定删除 ${file}？`)) return;
+            const { error } = await api('/api/attachment?file=' + encodeURIComponent(file), { method: 'DELETE' });
+            if (error) return toast('删除失败：' + error);
+            await loadGrid();
+            toast(`已删除 ${file}`);
+          });
+        });
+      }
+
+      $('#attach-upload-input').addEventListener('change', async (e) => {
+        const files = [...e.target.files].filter((f) => f.type.startsWith('image/'));
+        if (!files.length) return;
+        await uploadFiles(files);
+        await loadGrid();
+        toast(`上传 ${files.length} 张图片`);
+        e.target.value = '';
+      });
+
+      loadGrid();
+    </script>
+  </body>
+</html>

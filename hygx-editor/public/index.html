@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="miku">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HYGX EDITOR</title>
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="highlight.css" />
+  </head>
+  <body class="is-editor">
+    <header class="topbar">
+      <button class="icon-btn" id="toggle-sidebar" title="收起 / 展开文章列表（⌘\）">☰</button>
+      <span class="brand">HYGX EDITOR</span>
+      <span class="blogdir" id="blogdir"></span>
+      <span class="top-links">
+        <a href="photos.html" class="top-link">照片墙</a>
+        <a href="attachments.html" class="top-link">附件</a>
+      </span>
+    </header>
+
+    <!-- 文章视图 -->
+    <main id="view-post" class="view">
+      <aside class="sidebar" id="sidebar">
+        <div class="side-head">
+          <button class="btn btn-sm" id="new-post">+ 新建</button>
+          <input id="post-search" class="side-search" type="search" placeholder="搜索标题…" />
+        </div>
+        <ul id="post-list" class="post-list"></ul>
+        <div class="side-foot" id="post-count"></div>
+      </aside>
+
+      <div class="gutter" id="gutter-side" title="拖拽调整宽度（双击复位）"></div>
+
+      <section class="editor" id="post-editor" hidden>
+        <div class="editor-head">
+          <input id="f-title" class="title-input" placeholder="文章标题" />
+          <span class="dirty-dot" id="dirty-dot" title="有未保存的修改">●</span>
+          <button class="btn" id="save-post">保存 <kbd>⌘S</kbd></button>
+          <button class="btn btn-danger" id="delete-post" hidden>删除</button>
+        </div>
+
+        <div class="fm-wrap" id="fm-wrap">
+          <button class="fm-toggle" id="fm-toggle" aria-expanded="false">
+            <span class="fm-caret">▶</span>
+            <span class="fm-label">文章信息</span>
+            <span class="fm-summary" id="fm-summary"></span>
+          </button>
+          <div class="fm-grid" id="fm-grid">
+            <label>文件名 <input id="f-filename" placeholder="my-post" /></label>
+            <label>子目录 <input id="f-subdir" placeholder="cat1" /></label>
+            <label>分类 <input id="f-category" /></label>
+            <label>标签 <input id="f-tags" placeholder="逗号分隔" /></label>
+            <label>发布日期 <input id="f-pubdate" type="date" /></label>
+            <label>更新日期 <input id="f-updated" type="date" /></label>
+            <label>封面
+              <select id="f-cover"><option value="">无</option></select>
+            </label>
+            <label class="check"><input id="f-pinned" type="checkbox" /> 置顶</label>
+            <label class="check"><input id="f-draft" type="checkbox" /> 草稿</label>
+            <label class="fm-full">描述 <input id="f-desc" /></label>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="md-tools">
+            <button class="tool" data-md="bold" title="加粗 ⌘B"><b>B</b></button>
+            <button class="tool" data-md="italic" title="斜体 ⌘I"><i>I</i></button>
+            <button class="tool" data-md="h2" title="二级标题">H2</button>
+            <button class="tool" data-md="h3" title="三级标题">H3</button>
+            <button class="tool" data-md="quote" title="引用">引用</button>
+            <button class="tool" data-md="ul" title="无序列表">列表</button>
+            <button class="tool" data-md="ol" title="有序列表">编号</button>
+            <button class="tool" data-md="code" title="行内代码 / 代码块">代码</button>
+            <button class="tool" data-md="link" title="链接 ⌘K">链接</button>
+            <button class="tool" id="insert-attach" title="插入附件图片">图片</button>
+          </div>
+          <div class="view-modes" id="view-modes">
+            <button class="tool" data-mode="edit" title="仅编辑">编辑</button>
+            <button class="tool is-on" data-mode="split" title="分栏">分栏</button>
+            <button class="tool" data-mode="preview" title="仅预览">预览</button>
+          </div>
+        </div>
+
+        <div class="split-panel" id="split-panel">
+          <div class="pane pane-edit">
+            <div class="pane-head">
+              <span>MARKDOWN</span>
+              <span class="pane-meta" id="edit-meta"></span>
+            </div>
+            <textarea id="f-body" class="md-input" spellcheck="false"
+              placeholder="在这里写 Markdown…&#10;&#10;支持拖拽 / 粘贴图片自动上传并插入"></textarea>
+          </div>
+
+          <div class="gutter" id="gutter-split" title="拖拽调整分栏（双击复位）"></div>
+
+          <div class="pane pane-preview">
+            <div class="pane-head">
+              <span>实时预览</span>
+              <label class="pane-meta"><input type="checkbox" id="sync-scroll" checked /> 同步滚动</label>
+            </div>
+            <article id="preview" class="post-content"></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="empty" id="post-empty">
+        <div class="empty-inner">
+          <p class="empty-title">← 选择一篇文章，或点「+ 新建」</p>
+          <ul class="empty-keys">
+            <li><kbd>⌘S</kbd> 保存</li>
+            <li><kbd>⌘B</kbd> / <kbd>⌘I</kbd> 加粗 / 斜体</li>
+            <li><kbd>⌘K</kbd> 链接</li>
+            <li><kbd>Tab</kbd> / <kbd>⇧Tab</kbd> 缩进 / 反缩进</li>
+            <li><kbd>⌘\</kbd> 收起列表</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <!-- 插入附件弹窗 -->
+    <div id="attach-modal" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-head">
+          <span>选择附件</span>
+          <button class="modal-close" id="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="attach-bar modal-attach-bar">
+            <label class="attach-upload">
+              <span class="btn btn-sm">+ 上传图片</span>
+              <input type="file" accept="image/*" multiple id="attach-upload-input" hidden />
+            </label>
+            <span class="attach-count" id="attach-count"></span>
+          </div>
+          <div id="attach-grid" class="attach-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

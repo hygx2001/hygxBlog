@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/PostCard.astro';
-import { getPublishedPosts, countBy } from '../utils/posts';
+import { getPublishedPosts, countBy, PAGE_SIZE } from '../utils/posts';
 import { SITE_DESCRIPTION } from '../consts';
 
 const posts = await getPublishedPosts();
+const latestPosts = posts.slice(0, PAGE_SIZE);
+const hasMorePosts = posts.length > PAGE_SIZE;
 const categoryCount = countBy(posts, (p) => [p.data.category]).length;
 const tagCount = countBy(posts, (p) => p.data.tags).length;
 ---
@@ -22,9 +24,18 @@ const tagCount = countBy(posts, (p) => p.data.tags).length;
     </div>
   </section>
 
-  <h1 class="page-title" id="latest">最新文章</h1>
+  <!-- h2 而非 h1：每页只应有一个 h1（上面的站名），否则读屏器的标题导航会失去主次 -->
+  <h2 class="page-title" id="latest">最新文章</h2>
   <div class="post-list">
-    {posts.map((post) => <PostCard post={post} />)}
+    {latestPosts.map((post, i) => <PostCard post={post} eager={i === 0} />)}
     {posts.length === 0 && <p>还没有文章，去 src/content/blog/ 里写一篇吧。</p>}
   </div>
+  {
+    hasMorePosts && (
+      <nav class="post-pager" aria-label="最新文章分页">
+        <span />
+        <a class="pixel-btn post-pager__next" href="/blog/page/2/" rel="next">下一页 →</a>
+      </nav>
+    )
+  }
 </BaseLayout>

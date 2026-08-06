@@ -1,0 +1,17 @@
+---
+/**
+ * 文章归档首页 /blog/。
+ * 站内多处（PostCard、时间轴、RSS）都在发 /blog/xxx 链接，此前 /blog/ 本身没有路由，
+ * 父路径直接 404。
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArchiveList from '../../components/ArchiveList.astro';
+import { getPublishedPosts, PAGE_SIZE } from '../../utils/posts';
+
+const posts = await getPublishedPosts();
+const lastPage = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+---
+
+<BaseLayout title="全部文章" description={`全站 ${posts.length} 篇文章的归档列表。`}>
+  <ArchiveList posts={posts.slice(0, PAGE_SIZE)} total={posts.length} currentPage={1} lastPage={lastPage} />
+</BaseLayout>

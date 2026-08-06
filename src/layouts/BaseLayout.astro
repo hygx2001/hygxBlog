@@ -1,8 +1,8 @@
 ---
 import '../styles/fonts.css';
 import '../styles/global.css';
-import fusionPixelFontUrl from '@fontsource/fusion-pixel-12px-monospaced-sc/files/fusion-pixel-12px-monospaced-sc-latin-400-normal.woff2?url';
 import pressStartFontUrl from '@fontsource/press-start-2p/files/press-start-2p-latin-400-normal.woff2?url';
+import fontManifest from '../styles/generated/fusion-pixel.manifest.json';
 import { ClientRouter } from 'astro:transitions';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
@@ -32,7 +32,11 @@ const ogImage = new URL(image, Astro.site);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
-    <link rel="preload" href={fusionPixelFontUrl} as="font" type="font/woff2" crossorigin="anonymous" />
+    {/* 只预加载拉丁分片（U+20-7E）：每个页面的 logo / READ >> / 日期都要用它。
+        中文分片按页而异，猜着预加载只会浪费带宽，交给 font-display: swap。 */}
+    {fontManifest.preload.map((href) => (
+      <link rel="preload" href={href} as="font" type="font/woff2" crossorigin="anonymous" />
+    ))}
     <link rel="preload" href={pressStartFontUrl} as="font" type="font/woff2" crossorigin="anonymous" />
     <link rel="canonical" href={canonical} />
     <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href="/rss.xml" />
@@ -68,7 +72,10 @@ const ogImage = new URL(image, Astro.site);
     </script>
   </head>
   <body>
-    <!-- 红白机风开机加载条：每个会话只播一次 -->
+    <a class="skip-link" href="#main">跳到正文</a>
+    <!-- 红白机风开机加载条：每个会话只播一次。
+         遮罩是全屏不透明的，只能靠下面的脚本移除 —— 脚本没跑成整站就是白屏，
+         所以给 noscript 加一条无条件隐藏它的规则兜底。 -->
     <div id="boot-loader" aria-hidden="true">
       <div class="boot-box">
         <p class="boot-title">HYGX BLOG</p>
@@ -76,8 +83,11 @@ const ogImage = new URL(image, Astro.site);
         <p class="boot-hint">LOADING...</p>
       </div>
     </div>
+    <noscript>
+      <style>#boot-loader { display: none !important; }</style>
+    </noscript>
     <Header />
-    <main class="container" data-pagefind-body={searchable ? true : undefined}>
+    <main id="main" class="container" data-pagefind-body={searchable ? true : undefined}>
       <slot />
     </main>
     <Footer />
@@ -91,7 +101,17 @@ const ogImage = new URL(image, Astro.site);
           return;
         }
         sessionStorage.setItem('booted', '1');
+        // 系统开了「减弱动态效果」就别播了，直接进站
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          loader.remove();
+          return;
+        }
         document.body.style.overflow = 'hidden';
+        // 兜底：脚本万一中途抛错，别把整站锁在遮罩后面
+        setTimeout(() => {
+          loader.remove();
+          document.body.style.overflow = '';
+        }, 3000);
         const bar = document.getElementById('boot-blocks');
         const TOTAL = 16;
         const cells = [];

@@ -1,12 +1,9 @@
-/* 只保留现代浏览器使用的 WOFF2，避免把旧 WOFF 回退打进构建产物。 */
-@font-face {
-  font-family: 'Fusion Pixel 12px Monospaced SC';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 400;
-  src: url('@fontsource/fusion-pixel-12px-monospaced-sc/files/fusion-pixel-12px-monospaced-sc-latin-400-normal.woff2') format('woff2');
-}
+/* Fusion Pixel 中文像素字体：按 unicode-range 切成 49 片，浏览器只下当前页用到的。
+   由 `npm run fonts:build` 生成并提交（源文件是单个 609 KB woff2，无法按需加载）。
+   @import 必须排在所有其它规则之前。 */
+@import './generated/fusion-pixel-12px-monospaced-sc.css';
 
+/* 只保留现代浏览器使用的 WOFF2，避免把旧 WOFF 回退打进构建产物。 */
 @font-face {
   font-family: 'Press Start 2P';
   font-style: normal;

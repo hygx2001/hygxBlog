@@ -2,20 +2,32 @@
 import type { CollectionEntry } from 'astro:content';
 import PixelCover from './PixelCover.astro';
 import { readingTime } from '../utils/posts';
+import { getAttachmentSizeAttrs } from '../utils/image-size.mjs';
 
 interface Props {
   post: CollectionEntry<'blog'>;
+  /** 首屏第一张卡片设 true：急加载 + 高优先级，它通常就是 LCP 元素 */
+  eager?: boolean;
 }
 
-const { post } = Astro.props;
+const { post, eager = false } = Astro.props;
 const { title, description, pubDate, category, tags, cover, pinned } = post.data;
 const date = pubDate.toISOString().slice(0, 10);
+const coverSize = cover ? await getAttachmentSizeAttrs(cover) : {};
 ---
 
 <article class="pixel-card pixel-card--hover post-card">
   {
     cover
-      ? <img class="post-card__cover" src={`/attachments/${cover}`} alt={title} />
+      ? <img
+          class="post-card__cover"
+          src={`/attachments/${cover}`}
+          {...coverSize}
+          loading={eager ? 'eager' : 'lazy'}
+          decoding={eager ? 'sync' : 'async'}
+          fetchpriority={eager ? 'high' : undefined}
+          alt=""
+        />
       : <PixelCover class="post-card__cover" seed={post.id} />
   }
   <div class="post-card__meta">

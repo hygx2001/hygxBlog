@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getAttachmentSizeAttrs } from '../utils/image-size.mjs';
 
 // 按年月倒序
 const groups = (await getCollection('photos')).sort(
@@ -15,7 +16,15 @@ function tiltOf(seed: string) {
 }
 
 const groupsWithContent = await Promise.all(
-  groups.map(async (group) => ({ group, Content: (await render(group)).Content })),
+  groups.map(async (group) => ({
+    group,
+    Content: (await render(group)).Content,
+    sizes: Object.fromEntries(
+      await Promise.all(
+        group.data.photos.map(async (p) => [p.src, await getAttachmentSizeAttrs(p.src)] as const),
+      ),
+    ),
+  })),
 );
 ---
 
@@ -23,7 +32,7 @@ const groupsWithContent = await Promise.all(
   <h1 class="page-title">照片墙</h1>
   <div class="gallery">
     {
-      groupsWithContent.map(({ group, Content }) => (
+      groupsWithContent.map(({ group, Content, sizes }) => (
         <section class="gallery__group">
           <h2 class="gallery__month">
             {group.data.year} / {String(group.data.month).padStart(2, '0')}
@@ -34,8 +43,20 @@ const groupsWithContent = await Promise.all(
           </div>
           <div class="gallery__grid">
             {group.data.photos.map((photo) => (
-              <figure class="photo-item" style={`--tilt: ${tiltOf(photo.src).toFixed(2)}deg`}>
-                <img src={`/attachments/${photo.src}`} alt={photo.title} loading="lazy" />
+              <figure
+                class="photo-item"
+                style={`--tilt: ${tiltOf(photo.src).toFixed(2)}deg`}
+                tabindex="0"
+                role="button"
+                aria-label={`放大查看：${photo.title}`}
+              >
+                <img
+                  src={`/attachments/${photo.src}`}
+                  alt={photo.title}
+                  {...sizes[photo.src]}
+                  loading="lazy"
+                  decoding="async"
+                />
                 <figcaption>
                   <strong>{photo.title}</strong>
                   {photo.note && <span>{photo.note}</span>}
@@ -76,6 +97,10 @@ const groupsWithContent = await Promise.all(
 
     const EASE = 'cubic-bezier(0.2, 0.7, 0.2, 1)';
     const FLIP = 360; // 翻转 + 旋转一整圈
+    // 550ms 飞行 + 整圈翻转 + 鼠标跟踪 3D 倾斜，正是前庭敏感人群要躲的那类动效。
+    // WAAPI 不受 CSS 媒体查询管辖，只能在 JS 里判断，直接跳到终态。
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    const flightDuration = () => (reduceMotion.matches ? 0 : 550);
 
     type Rect = { top: number; left: number; width: number; height: number };
 
@@ -96,6 +121,7 @@ const groupsWithContent = await Promise.all(
 
     /** 伪 3D 检视：鼠标位置映射为 rotateX / rotateY */
     function onMouseMove(e: MouseEvent) {
+      if (reduceMotion.matches) return;
       if (!active || !active.classList.contains('is-settled')) return;
       const rx = (0.5 - e.clientY / window.innerHeight) * 18;
       const ry = (e.clientX / window.innerWidth - 0.5) * 24;
@@ -128,7 +154,7 @@ const groupsWithContent = await Promise.all(
           { ...rectStyles(originRect), transform: `rotate(${originTilt})` },
           { ...rectStyles(t), transform: endTransform },
         ],
-        { duration: 550, easing: EASE, fill: 'forwards' },
+        { duration: flightDuration(), easing: EASE, fill: 'forwards' },
       );
       flight.onfinish = () => {
         // 落地：提交内联终态后取消动画（无跳变），进入检视态
@@ -161,7 +187,7 @@ const groupsWithContent = await Promise.all(
           { ...rectStyles(current), transform: currentTransform },
           { ...rectStyles(rect), transform: `rotate(${tilt})` },
         ],
-        { duration: 550, easing: EASE, fill: 'forwards' },
+        { duration: flightDuration(), easing: EASE, fill: 'forwards' },
       );
       flight.onfinish = () => {
         flight?.cancel();
@@ -187,6 +213,14 @@ const groupsWithContent = await Promise.all(
     document.querySelectorAll<HTMLElement>('.photo-item').forEach((item) => {
       item.addEventListener('click', () => {
         if (item === active) return; // 点击照片本身不退出
+        openFocus(item);
+      }, { signal });
+      // 键盘等价操作：figure 是 role="button"，必须响应 Enter / Space，
+      // 否则下面那套 Esc / ← → 处理器键盘用户根本够不着
+      item.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        if (item === active) return;
+        e.preventDefault(); // 空格默认是翻页
         openFocus(item);
       }, { signal });
     });

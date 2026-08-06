@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getPublishedPosts } from '../utils/posts';
+import { getPostsByDate } from '../utils/posts';
 
-const posts = await getPublishedPosts();
+// 时间轴按日期讲故事，不能带置顶优先的顺序
+const posts = await getPostsByDate();
 
 // 按年份分组
 const byYear = new Map<number, typeof posts>();

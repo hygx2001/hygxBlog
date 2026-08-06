@@ -1,0 +1,37 @@
+---
+/**
+ * 归档分页 /blog/page/2/ 起。
+ * 第 1 页留给 /blog/，这里只生成 2 及以后 —— 不能用顶层 rest 参数，
+ * 那会和 /blog/[...id].astro 撞车。
+ */
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ArchiveList from '../../../components/ArchiveList.astro';
+import { getPublishedPosts, PAGE_SIZE } from '../../../utils/posts';
+
+export const getStaticPaths = (async () => {
+  const posts = await getPublishedPosts();
+  const lastPage = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+  return Array.from({ length: Math.max(0, lastPage - 1) }, (_, i) => {
+    const page = i + 2;
+    return {
+      params: { page: String(page) },
+      props: {
+        posts: posts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+        total: posts.length,
+        currentPage: page,
+        lastPage,
+      },
+    };
+  });
+}) satisfies GetStaticPaths;
+
+const { posts, total, currentPage, lastPage } = Astro.props;
+---
+
+<BaseLayout
+  title={`全部文章 · 第 ${currentPage} 页`}
+  description={`全站 ${total} 篇文章的归档列表，第 ${currentPage} / ${lastPage} 页。`}
+>
+  <ArchiveList posts={posts} total={total} currentPage={currentPage} lastPage={lastPage} />
+</BaseLayout>

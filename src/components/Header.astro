@@ -1,9 +1,11 @@
 ---
 import { SITE_TITLE } from '../consts';
 
-const path = Astro.url.pathname;
+// 结尾统一带斜杠再比，避免 /categories 与 /categories/ 判不出当前页
+const path = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : Astro.url.pathname + '/';
 const nav = [
   { href: '/', label: '首页' },
+  { href: '/blog/', label: '文章' },
   { href: '/categories/', label: '分类' },
   { href: '/tags/', label: '标签' },
   { href: '/gallery/', label: '照片墙' },
@@ -22,31 +24,41 @@ const themes = [
 <header class="site-header">
   <div class="container">
     <a class="site-logo" href="/">{SITE_TITLE}</a>
-    <nav class="site-nav">
-      {nav.map((item) => (
-        <a
-          href={item.href}
-          class:list={[{ 'is-active': item.href === '/' ? path === '/' : path.startsWith(item.href) }]}
-        >
-          {item.label}
-        </a>
-      ))}
+    <nav class="site-nav" aria-label="主导航">
+      {nav.map((item) => {
+        const active = item.href === '/' ? path === '/' : path.startsWith(item.href);
+        return (
+          <a href={item.href} class:list={[{ 'is-active': active }]} aria-current={active ? 'page' : undefined}>
+            {item.label}
+          </a>
+        );
+      })}
     </nav>
-    <button class="pixel-btn search-open" type="button" aria-label="搜索">搜索</button>
+    <button
+      class="pixel-btn search-open"
+      type="button"
+      aria-label="搜索"
+      aria-haspopup="dialog"
+      aria-expanded="false"
+      aria-controls="search-modal">搜索</button>
     <div class="theme-switcher" role="group" aria-label="主题切换">
       {themes.map((t) => (
-        <button class="pixel-btn" data-set-theme={t.id} title={`${t.name}主题`}>{t.label}</button>
+        <button class="pixel-btn" data-set-theme={t.id} title={`${t.name}主题`} aria-pressed="false">
+          <span aria-hidden="true">{t.label}</span>
+          <span class="sr-only">{t.name}主题</span>
+        </button>
       ))}
     </div>
   </div>
 </header>
 
 <!-- 搜索弹层（pagefind，构建后可用） -->
-<div id="search-modal" role="dialog" aria-label="站内搜索" hidden>
+<div id="search-modal" role="dialog" aria-modal="true" aria-label="站内搜索" hidden>
   <div class="search-panel pixel-card">
     <div class="search-bar">
+      <label class="sr-only" for="search-input">搜索文章</label>
       <input id="search-input" type="search" placeholder="搜索文章..." autocomplete="off" />
-      <button class="pixel-btn" id="search-close" type="button">×</button>
+      <button class="pixel-btn" id="search-close" type="button" aria-label="关闭搜索">×</button>
     </div>
     <ul id="search-results"></ul>
     <p id="search-status">输入关键词开始搜索 · Esc 关闭</p>
@@ -58,7 +70,9 @@ const themes = [
   (() => {
     const markActive = (theme) => {
       document.querySelectorAll('[data-set-theme]').forEach((btn) => {
-        btn.classList.toggle('is-active', btn.dataset.setTheme === theme);
+        const on = btn.dataset.setTheme === theme;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', String(on)); // 选中态不能只靠颜色
       });
     };
 
@@ -80,31 +94,46 @@ const themes = [
 </script>
 
 <script is:inline>
+  const IDLE_HINT = '输入关键词开始搜索 · Esc 关闭';
   let pagefind = null;
-  let triedLoad = false;
+  let pagefindLoad = null; // 进行中的加载 Promise，失败后置回 null 以便重试
   let debounce;
+  let lastFocused = null;
 
-  async function ensurePagefind(status) {
-    if (pagefind || triedLoad) return;
-    triedLoad = true;
-    try {
-      // pagefind 索引由构建期 postbuild 生成，dev 下不存在；
-      // 由浏览器运行时加载 postbuild 生成的索引模块
-      pagefind = await import('/pagefind/pagefind.js');
-      await pagefind.init();
-    } catch {
-      status.textContent = '搜索索引未生成：执行 npm run build 后可用';
+  const esc = (s) =>
+    String(s ?? '').replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+  function ensurePagefind(status) {
+    if (pagefind) return Promise.resolve(pagefind);
+    // 缓存 Promise 而不是「试过了」的布尔值：并发调用共用一次加载，
+    // 失败后清空，下次打开还能再试（dev 下构建完索引就能用上，不必刷新）
+    if (!pagefindLoad) {
+      pagefindLoad = (async () => {
+        // pagefind 索引由构建期 postbuild 生成，dev 下不存在
+        const mod = await import('/pagefind/pagefind.js');
+        await mod.init();
+        pagefind = mod;
+        return mod;
+      })().catch((err) => {
+        pagefindLoad = null;
+        if (status) status.textContent = '搜索索引未生成：执行 npm run build 后可用';
+        throw err;
+      });
     }
+    return pagefindLoad;
   }
 
   function openModal() {
     const modal = document.getElementById('search-modal');
     const input = document.getElementById('search-input');
     if (!modal || !input) return;
+    lastFocused = document.activeElement; // 关闭后要还回去
     modal.hidden = false;
+    document.querySelector('.search-open')?.setAttribute('aria-expanded', 'true');
     input.focus();
     const status = document.getElementById('search-status');
-    if (status) ensurePagefind(status);
+    ensurePagefind(status).catch(() => {});
   }
 
   function closeModal() {
@@ -116,7 +145,28 @@ const themes = [
     modal.hidden = true;
     input.value = '';
     list.innerHTML = '';
-    status.textContent = '输入关键词开始搜索 · Esc 关闭';
+    status.textContent = IDLE_HINT;
+    document.querySelector('.search-open')?.setAttribute('aria-expanded', 'false');
+    // 焦点还给触发按钮，否则键盘用户会被丢回文档开头
+    if (lastFocused instanceof HTMLElement && lastFocused.isConnected) lastFocused.focus();
+    lastFocused = null;
+  }
+
+  /** 焦点陷阱：弹窗打开时 Tab 不能跑到背后的页面上去 */
+  function trapFocus(event) {
+    const modal = document.getElementById('search-modal');
+    if (!modal || modal.hidden || event.key !== 'Tab') return;
+    const focusable = modal.querySelectorAll('input, button, a[href]');
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   async function runSearch(input) {
@@ -124,13 +174,19 @@ const themes = [
     const status = document.getElementById('search-status');
     if (!list || !status) return;
     const q = input.value;
-    if (!pagefind) return;
     if (!q.trim()) {
       list.innerHTML = '';
-      status.textContent = '输入关键词开始搜索 · Esc 关闭';
+      status.textContent = IDLE_HINT;
       return;
     }
     status.textContent = '搜索中...';
+    // 打开弹窗后立刻打字时索引可能还没加载完，等它，而不是静默返回空结果
+    try {
+      await ensurePagefind(status);
+    } catch {
+      return;
+    }
+    if (input.value !== q) return; // 等待期间又改了关键词，丢弃这次
     const search = await pagefind.search(q);
     const results = await Promise.all(search.results.slice(0, 8).map((r) => r.data()));
     if (results.length === 0) {
@@ -138,13 +194,16 @@ const themes = [
       status.textContent = '没有找到相关内容';
       return;
     }
-    status.textContent = `${search.results.length} 条结果`;
+    const shown = results.length;
+    const total = search.results.length;
+    status.textContent = total > shown ? `显示前 ${shown} / 共 ${total} 条结果` : `${total} 条结果`;
+    // excerpt 是 pagefind 生成的 HTML（含 <mark>），保留；title / url 必须转义
     list.innerHTML = results
       .map(
         (r) => `
         <li>
-          <a href="${r.url}">
-            <strong>${r.meta?.title ?? r.url}</strong>
+          <a href="${esc(r.url)}">
+            <strong>${esc(r.meta?.title ?? r.url)}</strong>
             <span>${r.excerpt}</span>
           </a>
         </li>`,
@@ -175,5 +234,6 @@ const themes = [
       openModal();
     }
     if (event.key === 'Escape' && !modal.hidden) closeModal();
+    trapFocus(event);
   });
 </script>

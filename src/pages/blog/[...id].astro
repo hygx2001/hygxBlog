@@ -76,7 +76,7 @@ const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
   </article>
 
   <!-- 正文图片放大检视 -->
-  <div id="img-zoom" hidden><img alt="" /></div>
+  <div id="img-zoom" role="dialog" aria-modal="true" aria-label="图片放大预览" tabindex="-1" hidden><img alt="" /></div>
 </BaseLayout>
 
 <script>
@@ -91,18 +91,35 @@ const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
     const zoomImg = zoom.querySelector('img');
     if (!zoomImg) return;
 
+    let lastFocused: HTMLElement | null = null;
+
     const close = () => {
       zoom.hidden = true;
       document.body.classList.remove('gallery-focus');
+      lastFocused?.focus(); // 焦点还回触发图片，别把键盘用户丢回文档开头
+      lastFocused = null;
+    };
+
+    const open = (img: HTMLImageElement) => {
+      lastFocused = img;
+      zoomImg.src = img.src;
+      zoomImg.alt = img.alt;
+      zoom.hidden = false;
+      document.body.classList.add('gallery-focus'); // 复用：锁定滚动
+      zoom.focus();
     };
 
     document.querySelectorAll<HTMLImageElement>('.post-content img').forEach((img) => {
       img.style.cursor = 'zoom-in';
-      img.addEventListener('click', () => {
-        zoomImg.src = img.src;
-        zoomImg.alt = img.alt;
-        zoom.hidden = false;
-        document.body.classList.add('gallery-focus'); // 复用：锁定滚动
+      // 可聚焦 + 有语义，键盘用户才能触发放大
+      img.tabIndex = 0;
+      img.setAttribute('role', 'button');
+      img.setAttribute('aria-label', img.alt ? `放大查看：${img.alt}` : '放大查看图片');
+      img.addEventListener('click', () => open(img), { signal });
+      img.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        open(img);
       }, { signal });
     });
     zoom.addEventListener('click', close, { signal });

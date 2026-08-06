@@ -1,0 +1,23 @@
+{
+  "name": "hygx-editor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "HYGX BLOG 本地可视化编辑器：生成符合博客结构的文章/照片墙，支持 Markdown 实时预览",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "gray-matter": "^4.0.3",
+    "highlight.js": "^11.11.1",
+    "multer": "^2.2.0",
+    "open": "^11.0.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "unified": "^11.0.5"
+  }
+}
