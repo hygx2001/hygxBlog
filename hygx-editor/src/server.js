@@ -32,6 +32,7 @@ if (!fs.existsSync(BLOG_POST_DIR)) {
   process.exit(1);
 }
 fs.mkdirSync(BLOG_ATTACHMENTS, { recursive: true });
+fs.mkdirSync(BLOG_PHOTO_DIR, { recursive: true });
 
 // Markdown 渲染管线（与博客保持一致：GFM + Obsidian 图片 + 代码高亮）
 const processor = unified()
@@ -201,9 +202,13 @@ app.post('/api/save-photo', async (req, res) => {
   try {
     const { year, month, photos = [], body = '' } = req.body;
     const y = Number(year), m = Number(month);
-    if (!y || !m) return res.status(400).json({ error: '年/月必填' });
+    if (!Number.isInteger(y) || !Number.isInteger(m) || m < 1 || m > 12) {
+      return res.status(400).json({ error: '请输入有效的年和月份（1–12）' });
+    }
+    if (!Array.isArray(photos)) return res.status(400).json({ error: '照片数据格式不正确' });
     const file = `${y}-${String(m).padStart(2, '0')}`;
     const fm = { year: y, month: m, photos };
+    await fsp.mkdir(BLOG_PHOTO_DIR, { recursive: true });
     await fsp.writeFile(path.join(BLOG_PHOTO_DIR, file + '.md'), matter.stringify(body, fm), 'utf8');
     res.json({ file });
   } catch (e) { res.status(500).json({ error: String(e) }); }

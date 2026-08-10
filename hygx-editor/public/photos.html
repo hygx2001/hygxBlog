@@ -38,7 +38,26 @@
 
       async function api(url, opts = {}) {
         const res = await fetch(url, opts);
-        return res.json();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const error = new Error(data.error || `请求失败（${res.status}）`);
+          error.status = res.status;
+          throw error;
+        }
+        return data;
+      }
+      function esc(value = '') {
+        return String(value).replace(/[&<>"']/g, (char) => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+        })[char]);
+      }
+      function attachmentUrl(name) {
+        return '/attachments/' + String(name).split('/').map(encodeURIComponent).join('/');
+      }
+      function attachmentOptions(selected = '') {
+        return `<option value="">选择/上传图片</option>` + attachments.map((file) =>
+          `<option value="${esc(file)}" ${file === selected ? 'selected' : ''}>${esc(file)}</option>`
+        ).join('');
       }
       function toast(msg) {
         const t = $('#toast');
@@ -48,106 +67,157 @@
       }
 
       async function loadAttachments() {
-        attachments = await api('/api/attachments');
+        const files = await api('/api/attachments');
+        attachments = Array.isArray(files) ? files : [];
         return attachments;
       }
 
       async function uploadFiles(files) {
         const fd = new FormData();
         [...files].forEach((f) => fd.append('file', f));
-        const { files: names, error } = await api('/api/upload', { method: 'POST', body: fd });
-        if (error) { toast('上传失败'); return []; }
+        const { files: names = [] } = await api('/api/upload', { method: 'POST', body: fd });
         await loadAttachments();
-        return names || [];
+        return names;
       }
 
-      async function loadPhotoList() {
+      async function loadPhotoList(selected = '') {
         const list = await api('/api/photos');
-        $('#photo-months').innerHTML = list.map((p) => `<option value="${p.file}">${p.file} (${p.count}张)</option>`).join('');
+        const select = $('#photo-months');
+        if (!list.length) {
+          select.innerHTML = '<option value="">暂无月份</option>';
+          select.disabled = true;
+          return [];
+        }
+        select.disabled = false;
+        select.innerHTML = list.map((p) =>
+          `<option value="${esc(p.file)}">${esc(p.file)} (${p.count}张)</option>`
+        ).join('');
+        select.value = list.some((p) => p.file === selected) ? selected : list[0].file;
+        return list;
       }
 
-      function addPhotoRow(p) {
+      function addPhotoRow(p = {}) {
         const row = document.createElement('div');
         row.className = 'photo-row';
         row.innerHTML = `
-          <img src="${p.src ? '/attachments/' + p.src : ''}" alt="" onerror="this.style.visibility='hidden'" />
+          <img src="${p.src ? attachmentUrl(p.src) : ''}" alt="" onerror="this.style.visibility='hidden'" />
           <div class="src-col">
             <select class="r-src">
-              <option value="">选择/上传图片</option>
-              ${attachments.map((f) => `<option value="${f}" ${f === p.src ? 'selected' : ''}>${f}</option>`).join('')}
+              ${attachmentOptions(p.src)}
             </select>
             <input type="file" accept="image/*" class="r-upload" />
           </div>
-          <input class="r-title" placeholder="标题" value="${p.title || ''}" />
-          <input class="r-note" placeholder="备注" value="${p.note || ''}" />
-          <input class="r-date" type="date" value="${p.date ? String(p.date).slice(0, 10) : ''}" />
+          <input class="r-title" placeholder="标题" value="${esc(p.title)}" />
+          <input class="r-note" placeholder="备注" value="${esc(p.note)}" />
+          <input class="r-date" type="date" value="${esc(p.date ? String(p.date).slice(0, 10) : '')}" />
           <button class="remove" type="button">×</button>
         `;
         $('#photo-list').appendChild(row);
         const img = row.querySelector('img');
         const srcSel = row.querySelector('.r-src');
-        srcSel.addEventListener('change', () => { img.src = '/attachments/' + srcSel.value; img.style.visibility = 'visible'; });
+        srcSel.addEventListener('change', () => {
+          if (!srcSel.value) {
+            img.removeAttribute('src');
+            img.style.visibility = 'hidden';
+            return;
+          }
+          img.src = attachmentUrl(srcSel.value);
+          img.style.visibility = 'visible';
+        });
         row.querySelector('.r-upload').addEventListener('change', async (e) => {
-          const names = await uploadFiles(e.target.files);
-          if (names[0]) { srcSel.value = names[0]; srcSel.dispatchEvent(new Event('change')); }
+          try {
+            const names = await uploadFiles(e.target.files);
+            if (names[0]) {
+              srcSel.innerHTML = attachmentOptions(names[0]);
+              srcSel.value = names[0];
+              srcSel.dispatchEvent(new Event('change'));
+              toast('上传成功：' + names[0]);
+            }
+          } catch (error) {
+            toast('上传失败：' + error.message);
+          } finally {
+            e.target.value = '';
+          }
         });
         row.querySelector('.remove').addEventListener('click', () => row.remove());
       }
 
       async function savePhoto() {
-        const photos = [...$$('.photo-row')].map((row) => ({
+        const rows = [...$$('.photo-row')].map((row) => ({
           src: row.querySelector('.r-src').value,
           title: row.querySelector('.r-title').value,
           note: row.querySelector('.r-note').value,
           date: row.querySelector('.r-date').value || undefined,
-        })).filter((p) => p.src && p.title);
-        const { file, error } = await api('/api/save-photo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            year: Number($('#p-year').value),
-            month: Number($('#p-month').value),
-            photos,
-            body: '',
-          }),
-        });
-        if (error) return toast('保存失败：' + error);
-        toast('已保存：' + file);
-        loadPhotoList();
+        }));
+        const photos = rows.filter((photo) => photo.src || photo.title || photo.note || photo.date);
+        if (photos.some((photo) => !photo.src || !photo.title.trim())) {
+          toast('每张照片都需要选择图片并填写标题');
+          return;
+        }
+        try {
+          const { file } = await api('/api/save-photo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              year: Number($('#p-year').value),
+              month: Number($('#p-month').value),
+              photos,
+              body: '',
+            }),
+          });
+          await loadPhotoList(file);
+          toast('已保存：' + file);
+        } catch (error) {
+          toast('保存失败：' + error.message);
+        }
       }
 
-      async function init() {
-        await loadAttachments();
-        loadPhotoList();
-
-        const now = new Date();
-        $('#p-year').value = now.getFullYear();
-        $('#p-month').value = now.getMonth() + 1;
-
-        $('#add-photo').addEventListener('click', () => addPhotoRow({}));
-        $('#save-photo').addEventListener('click', savePhoto);
-        $('#load-photo').addEventListener('click', async () => {
-          const file = `${$('#p-year').value}-${String($('#p-month').value).padStart(2, '0')}`;
-          const r = await api('/api/photo?file=' + file);
-          if (r.error) {
-            $('#photo-list').innerHTML = '';
-            [...$$('.photo-row')].forEach((n) => n.remove());
-            addPhotoRow({});
-            toast('新建月份：' + file);
-            return;
-          }
+      async function loadPhoto(file) {
+        const target = file || `${$('#p-year').value}-${String($('#p-month').value).padStart(2, '0')}`;
+        try {
+          const r = await api('/api/photo?file=' + encodeURIComponent(target));
           $('#p-year').value = r.year;
           $('#p-month').value = r.month;
           $('#photo-list').innerHTML = '';
           (r.photos || []).forEach(addPhotoRow);
-          if (!r.photos?.length) addPhotoRow({});
-        });
+          if (!r.photos?.length) addPhotoRow();
+        } catch (error) {
+          if (error.status !== 404) {
+            toast('加载失败：' + error.message);
+            return;
+          }
+          $('#photo-list').innerHTML = '';
+          addPhotoRow();
+          toast('新建月份：' + target);
+        }
+      }
+
+      async function init() {
+        $('#add-photo').addEventListener('click', () => addPhotoRow());
+        $('#save-photo').addEventListener('click', savePhoto);
+        $('#load-photo').addEventListener('click', () => loadPhoto());
         $('#photo-months').addEventListener('change', () => {
+          if (!$('#photo-months').value) return;
           const [y, m] = $('#photo-months').value.split('-');
           $('#p-year').value = y;
           $('#p-month').value = m;
-          $('#load-photo').click();
+          loadPhoto($('#photo-months').value);
         });
+
+        try {
+          await loadAttachments();
+          const list = await loadPhotoList();
+          if (list.length) {
+            await loadPhoto(list[0].file);
+          } else {
+            const now = new Date();
+            $('#p-year').value = now.getFullYear();
+            $('#p-month').value = now.getMonth() + 1;
+            addPhotoRow();
+          }
+        } catch (error) {
+          toast('初始化失败：' + error.message);
+        }
       }
 
       init();
