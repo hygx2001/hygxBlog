@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="780" viewBox="0 0 1400 780">
+  <rect width="1400" height="780" fill="white"/>
+  <style>
+    .title{font:700 34px Arial,sans-serif;fill:#102a43}
+    .head{font:700 25px Arial,sans-serif;fill:#102a43}
+    .label{font:600 20px Arial,sans-serif;fill:#334e68}
+    .small{font:500 18px Arial,sans-serif;fill:#486581}
+    .master{fill:#e8f1fb;stroke:#1f4e79;stroke-width:3;rx:12}
+    .slave{fill:#fff5f5;stroke:#c53030;stroke-width:3;rx:12}
+    .frame{fill:#f0f4f8;stroke:#829ab1;stroke-width:2;rx:8}
+    .addr{fill:#bee3f8;stroke:#2b6cb0;stroke-width:2}
+    .rw{fill:#feebc8;stroke:#dd6b20;stroke-width:2}
+    .ack{fill:#c6f6d5;stroke:#2f855a;stroke-width:2}
+    .wire{stroke:#1f4e79;stroke-width:5;fill:none}
+    .arrow{fill:#1f4e79}
+  </style>
+  <text x="700" y="55" text-anchor="middle" class="title">I²C 地址寻址与应答</text>
+  <text x="700" y="92" text-anchor="middle" class="small">主机发送地址码，从设备检查是否匹配；匹配后在第 9 个时钟应答 ACK</text>
+
+  <!-- Devices -->
+  <rect x="80" y="180" width="250" height="170" class="master"/>
+  <text x="205" y="255" text-anchor="middle" class="head">I²C 主机</text>
+  <text x="205" y="295" text-anchor="middle" class="small">发送地址码</text>
+  <rect x="1070" y="180" width="250" height="170" class="slave"/>
+  <text x="1195" y="255" text-anchor="middle" class="head">I²C 从设备</text>
+  <text x="1195" y="295" text-anchor="middle" class="small">地址匹配后应答</text>
+
+  <!-- Direction arrow -->
+  <path d="M340 265 H1060" class="wire"/>
+  <path d="M1060 265 l-20 -12 v24 z" class="arrow"/>
+  <text x="700" y="245" text-anchor="middle" class="label">SDA：地址帧</text>
+
+  <!-- Address frame -->
+  <text x="700" y="405" text-anchor="middle" class="head">地址帧（以 7 位地址为例）</text>
+  <rect x="180" y="450" width="1040" height="100" class="frame"/>
+  <rect x="180" y="450" width="700" height="100" class="addr"/>
+  <rect x="880" y="450" width="140" height="100" class="rw"/>
+  <rect x="1020" y="450" width="200" height="100" class="ack"/>
+  <text x="530" y="490" text-anchor="middle" class="label">7 位从设备地址</text>
+  <text x="530" y="525" text-anchor="middle" class="small">A6 A5 A4 A3 A2 A1 A0</text>
+  <text x="950" y="490" text-anchor="middle" class="label">R/W</text>
+  <text x="950" y="525" text-anchor="middle" class="small">0=写，1=读</text>
+  <text x="1120" y="490" text-anchor="middle" class="label">ACK</text>
+  <text x="1120" y="525" text-anchor="middle" class="small">从设备拉低 SDA</text>
+
+  <!-- Clock count -->
+  <text x="180" y="610" class="label">时钟位：</text>
+  <text x="340" y="610" class="small">第 1～7 位：地址</text>
+  <text x="650" y="610" class="small">第 8 位：R/W</text>
+  <text x="900" y="610" class="small">第 9 位：ACK</text>
+  <path d="M180 650 H1220" stroke="#829ab1" stroke-width="2"/>
+  <circle cx="530" cy="650" r="7" fill="#2b6cb0"/><circle cx="950" cy="650" r="7" fill="#dd6b20"/><circle cx="1120" cy="650" r="7" fill="#2f855a"/>
+  <text x="700" y="710" text-anchor="middle" class="small">若地址不匹配，从设备通常不应答（ACK=1，SDA 保持释放）</text>
+</svg>

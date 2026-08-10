@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <rect width="1200" height="700" fill="white"/>
+  <style>
+    .title{font:700 32px Arial,sans-serif;fill:#102a43}
+    .label{font:600 22px Arial,sans-serif;fill:#102a43}
+    .small{font:500 18px Arial,sans-serif;fill:#334e68}
+    .block{fill:#e8f1fb;stroke:#1f4e79;stroke-width:3;rx:12}
+    .wire{stroke:#1f4e79;stroke-width:5;fill:none}
+    .rail{stroke:#2b6cb0;stroke-width:5;fill:none}
+    .res{stroke:#c53030;stroke-width:4;fill:#fff5f5}
+    .node{fill:#1f4e79}
+  </style>
+  <text x="600" y="55" text-anchor="middle" class="title">I²C 接线示意图</text>
+
+  <!-- Devices -->
+  <rect x="100" y="220" width="240" height="220" class="block"/>
+  <text x="220" y="330" text-anchor="middle" class="title" font-size="30">MCU</text>
+  <rect x="860" y="220" width="240" height="220" class="block"/>
+  <text x="980" y="330" text-anchor="middle" class="label">I²C 外设</text>
+
+  <!-- Bus lines -->
+  <path d="M340 280 H860" class="wire"/>
+  <path d="M340 370 H860" class="wire"/>
+  <text x="600" y="270" text-anchor="middle" class="label">SDA</text>
+  <text x="600" y="360" text-anchor="middle" class="label">SCL</text>
+
+  <!-- Pull-up resistors, each connected to a VCC power symbol -->
+  <path d="M500 145 V205" class="rail"/>
+  <rect x="480" y="205" width="40" height="55" class="res"/>
+  <path d="M500 260 V280" class="wire"/>
+  <text x="545" y="235" class="small" fill="#c53030">R1</text>
+  <circle cx="500" cy="280" r="6" class="node"/>
+  <path d="M488 145 H512 M494 137 H506 M500 125 V145" class="rail"/>
+  <text x="500" y="112" text-anchor="middle" class="small" fill="#2b6cb0">VCC</text>
+
+  <path d="M700 145 V295" class="rail"/>
+  <rect x="680" y="295" width="40" height="55" class="res"/>
+  <path d="M700 350 V370" class="wire"/>
+  <text x="745" y="325" class="small" fill="#c53030">R2</text>
+  <circle cx="700" cy="370" r="6" class="node"/>
+  <path d="M688 145 H712 M694 137 H706 M700 125 V145" class="rail"/>
+  <text x="700" y="112" text-anchor="middle" class="small" fill="#2b6cb0">VCC</text>
+
+  <!-- Standalone ground symbols, not wired into device blocks -->
+  <path d="M220 475 V500 M195 500 H245 M202 508 H238 M210 516 H230" class="wire"/>
+  <text x="220" y="545" text-anchor="middle" class="small">GND</text>
+  <path d="M980 475 V500 M955 500 H1005 M962 508 H998 M970 516 H990" class="wire"/>
+  <text x="980" y="545" text-anchor="middle" class="small">GND</text>
+
+  <text x="600" y="595" text-anchor="middle" class="small">SDA、SCL 均需通过上拉电阻连接到 VCC</text>
+</svg>

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820">
+  <rect width="1400" height="820" fill="#ffffff"/>
+  <style>
+    .title{font:700 34px Arial,sans-serif;fill:#102a43}
+    .axis{font:700 24px Arial,sans-serif;fill:#102a43}
+    .label{font:600 20px Arial,sans-serif;fill:#334e68}
+    .note{font:500 20px Arial,sans-serif;fill:#486581}
+    .scl{stroke:#1f4e79;stroke-width:6;fill:none;stroke-linejoin:miter}
+    .sda{stroke:#c53030;stroke-width:6;fill:none;stroke-linejoin:miter}
+    .grid{stroke:#bcccdc;stroke-width:1;stroke-dasharray:5 6}
+    .sample{fill:#e6fffa;stroke:#2c7a7b;stroke-width:2;rx:8}
+  </style>
+  <text x="700" y="55" text-anchor="middle" class="title">I²C：SCL 高电平期间 SDA 数据有效</text>
+  <text x="700" y="92" text-anchor="middle" class="note">数据仅在 SCL 为低电平时改变；SCL 为高电平时，接收端采样 SDA</text>
+
+  <!-- Plot area -->
+  <line x1="220" y1="190" x2="1280" y2="190" class="grid"/>
+  <line x1="220" y1="300" x2="1280" y2="300" class="grid"/>
+  <line x1="220" y1="410" x2="1280" y2="410" class="grid"/>
+  <line x1="220" y1="520" x2="1280" y2="520" class="grid"/>
+  <text x="80" y="255" class="axis">SCL</text>
+  <text x="80" y="465" class="axis">SDA</text>
+  <text x="90" y="195" class="label">高</text>
+  <text x="90" y="305" class="label">低</text>
+  <text x="90" y="405" class="label">高</text>
+  <text x="90" y="515" class="label">低</text>
+
+  <!-- Vertical bit boundaries / sample centers -->
+  <g class="grid">
+    <line x1="320" y1="145" x2="320" y2="565"/><line x1="440" y1="145" x2="440" y2="565"/>
+    <line x1="560" y1="145" x2="560" y2="565"/><line x1="680" y1="145" x2="680" y2="565"/>
+    <line x1="800" y1="145" x2="800" y2="565"/><line x1="920" y1="145" x2="920" y2="565"/>
+    <line x1="1040" y1="145" x2="1040" y2="565"/><line x1="1160" y1="145" x2="1160" y2="565"/>
+  </g>
+
+  <!-- SCL clock: eight cycles -->
+  <path class="scl" d="M220 300 H260 V190 H320 V300 H380 V190 H440 V300 H500 V190 H560 V300 H620 V190 H680 V300 H740 V190 H800 V300 H860 V190 H920 V300 H980 V190 H1040 V300 H1100 V190 H1160 V300 H1220 V190 H1280"/>
+  <!-- SDA data bits: 1 0 1 1 0 1 0 1, stable during each high SCL window -->
+  <path class="sda" d="M220 410 H320 V520 H440 V410 H680 V520 H800 V410 H920 V520 H1040 V410 H1160 V410 H1280"/>
+
+  <!-- Highlight SCL-high sampling windows -->
+  <rect x="260" y="125" width="60" height="35" class="sample"/><rect x="380" y="125" width="60" height="35" class="sample"/>
+  <rect x="500" y="125" width="60" height="35" class="sample"/><rect x="620" y="125" width="60" height="35" class="sample"/>
+  <rect x="740" y="125" width="60" height="35" class="sample"/><rect x="860" y="125" width="60" height="35" class="sample"/>
+  <rect x="980" y="125" width="60" height="35" class="sample"/><rect x="1100" y="125" width="60" height="35" class="sample"/>
+  <g class="label" text-anchor="middle">
+    <text x="290" y="150">1</text><text x="410" y="150">0</text><text x="530" y="150">1</text><text x="650" y="150">1</text>
+    <text x="770" y="150">0</text><text x="890" y="150">1</text><text x="1010" y="150">0</text><text x="1130" y="150">1</text>
+  </g>
+
+  <line x1="260" y1="610" x2="1160" y2="610" stroke="#2c7a7b" stroke-width="3"/>
+  <path d="M260 610 l14 -7 v14 z M1160 610 l-14 -7 v14 z" fill="#2c7a7b"/>
+  <text x="710" y="645" text-anchor="middle" class="label">SCL 高电平期间：SDA 保持稳定，采样得到 1 0 1 1 0 1 0 1</text>
+  <text x="700" y="735" text-anchor="middle" class="note">注意：SDA 在 SCL 高电平期间的变化通常表示 START 或 STOP 条件</text>
+</svg>
