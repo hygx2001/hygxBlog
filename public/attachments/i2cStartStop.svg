@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <rect width="1400" height="900" fill="white"/>
+  <style>
+    .title{font:700 34px Arial,sans-serif;fill:#102a43}
+    .head{font:700 25px Arial,sans-serif;fill:#102a43}
+    .axis{font:700 22px Arial,sans-serif;fill:#102a43}
+    .note{font:500 20px Arial,sans-serif;fill:#486581}
+    .scl{stroke:#1f4e79;stroke-width:6;fill:none}
+    .sda{stroke:#c53030;stroke-width:6;fill:none}
+    .grid{stroke:#bcccdc;stroke-width:1;stroke-dasharray:5 6}
+    .start{fill:#fff5f5;stroke:#c53030;stroke-width:2;rx:8}
+    .stop{fill:#e6fffa;stroke:#2c7a7b;stroke-width:2;rx:8}
+  </style>
+  <text x="700" y="50" text-anchor="middle" class="title">I²C 通信开始与结束时序</text>
+
+  <!-- START -->
+  <text x="120" y="105" class="head">START 条件</text>
+  <text x="120" y="140" class="note">SCL 保持高电平时，SDA 由高变低</text>
+  <text x="45" y="205" class="axis">SCL</text><text x="45" y="300" class="axis">SDA</text>
+  <line x1="160" y1="190" x2="650" y2="190" class="grid"/><line x1="160" y1="285" x2="650" y2="285" class="grid"/>
+  <path d="M160 190 H620" class="scl"/>
+  <path d="M160 285 H390 V380 H620" class="sda"/>
+  <rect x="370" y="155" width="125" height="45" class="start"/>
+  <text x="432" y="185" text-anchor="middle" class="axis" fill="#c53030">START</text>
+  <path d="M390 325 V350" stroke="#c53030" stroke-width="3" marker-end="url(#arrowRed)"/>
+
+  <!-- DATA -->
+  <text x="730" y="105" class="head">数据传输</text>
+  <text x="730" y="140" class="note">SDA 在 SCL 高电平期间保持稳定</text>
+  <text x="655" y="205" class="axis">SCL</text><text x="655" y="300" class="axis">SDA</text>
+  <line x1="770" y1="190" x2="1280" y2="190" class="grid"/><line x1="770" y1="285" x2="1280" y2="285" class="grid"/>
+  <path d="M770 285 H800 V190 H850 V285 H900 V190 H950 V285 H1000 V190 H1050 V285 H1100 V190 H1150 V285 H1200 V190 H1250 V285 H1280" class="scl"/>
+  <path d="M770 285 H850 V380 H950 V285 H1050 V380 H1150 V285 H1250 V380 H1280" class="sda"/>
+  <text x="1025" y="430" text-anchor="middle" class="note">示例数据：1 0 1 0 1</text>
+
+  <!-- STOP -->
+  <text x="120" y="530" class="head">STOP 条件</text>
+  <text x="120" y="565" class="note">SCL 保持高电平时，SDA 由低变高</text>
+  <text x="45" y="630" class="axis">SCL</text><text x="45" y="725" class="axis">SDA</text>
+  <line x1="160" y1="615" x2="650" y2="615" class="grid"/><line x1="160" y1="710" x2="650" y2="710" class="grid"/>
+  <path d="M160 615 H620" class="scl"/>
+  <path d="M160 710 H390 V615 H620" class="sda"/>
+  <rect x="370" y="580" width="125" height="45" class="stop"/>
+  <text x="432" y="610" text-anchor="middle" class="axis" fill="#2c7a7b">STOP</text>
+
+  <text x="700" y="840" text-anchor="middle" class="note">I²C 规则：SDA 只有在 SCL 为低电平时允许变化；SCL 高电平期间 SDA 必须稳定，除 START/STOP 外。</text>
+  <defs>
+    <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#c53030"/></marker>
+  </defs>
+</svg>
