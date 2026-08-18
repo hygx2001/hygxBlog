@@ -7,7 +7,7 @@ tags:
   - DIY
 draft: false
 pinned: false
-cover: fan1.png
+cover: fan0.png
 ---
 ## 引言
 

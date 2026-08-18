@@ -5,6 +5,7 @@ pubDate: '2026-08-10'
 category: 电子
 tags:
   - 协议
+  - i2c
 draft: false
 pinned: false
 ---
