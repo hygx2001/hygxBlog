@@ -56,10 +56,10 @@ const ogImage = new URL(image, Astro.site);
     <!-- 开机加载条已播过的话，首帧前加 no-boot 类直接隐藏，避免翻页全屏闪一下 -->
     <script is:inline>
       (() => {
-        const themes = ['miku', 'light', 'dark', 'rin', 'luka'];
+        const themes = ['miku', 'light', 'rin', 'luka'];
         const applyPageState = (root) => {
           const saved = localStorage.getItem('theme');
-          const system = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'miku';
+          const system = 'miku';
           root.dataset.theme = themes.includes(saved) ? saved : system;
           if (sessionStorage.getItem('booted')) root.classList.add('no-boot');
         };

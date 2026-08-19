@@ -1,57 +1,47 @@
 /* ============================================
    HYGX BLOG · 像素风全局样式
-   主题：miku（初音配色）/ light / dark
+   主题：miku（初音配色）/ light / rin / luka
    原则：硬边卡片、像素阶梯切角、零过渡、高级灰
    ============================================ */
 
 /* ---------- 主题变量 ---------- */
 :root,
 :root[data-theme='miku'] {
-  --bg: #dde2e1;            /* 高级灰底，带一点葱绿 */
-  --bg-soft: #ecefef;       /* 卡片底 */
-  --bg-inset: #d2d8d7;      /* 凹陷区域 */
-  --ink: #1c2426;           /* 主文字 */
-  --ink-dim: #5a6668;       /* 次要文字 */
-  --accent: #39c5bb;        /* 初音葱绿 #39C5BB */
-  --accent-ink: #0e3a37;    /* 葱绿上的文字 */
-  --accent-2: #e8467c;      /* 初音领带粉 */
-  --border: #1c2426;
-  --shadow: #1c2426;
-  --check: rgba(28, 36, 38, 0.035); /* 棋盘底纹 */
-  --code-bg: #232a2c;
+  --bg: #0a171d;            /* 夜航蓝底 */
+  --bg-soft: #10242b;       /* 卡片底 */
+  --bg-inset: #18343b;      /* 凹陷区域 */
+  --ink: #f3f2dc;           /* 主文字 */
+  --ink-dim: #9ab4ad;       /* 次要文字 */
+  --accent: #55e1cc;        /* 初音葱绿 */
+  --accent-ink: #071719;    /* 葱绿上的文字 */
+  --accent-2: #ff8c68;      /* 珊瑚橙强调 */
+  --border: #071217;
+  --shadow: #02070a;
+  --check: rgba(243, 242, 220, 0.045); /* 棋盘底纹 */
+  --code-bg: #081116;
+  --hero-bg: #f3f0d2;
+  --hero-ink: #0c2526;
+  --hero-muted: #4c6863;
+  --accent-label: '#55E1CC';
 }
 
 :root[data-theme='light'] {
-  --bg: #e7e7e5;
-  --bg-soft: #f7f7f6;
-  --bg-inset: #dbdbd9;
-  --ink: #17181a;
-  --ink-dim: #606468;
-  --accent: #17181a;
-  --accent-ink: #f7f7f6;
-  --accent-2: #8b9096;
-  --border: #17181a;
-  --shadow: #17181a;
-  --check: rgba(23, 24, 26, 0.035);
+  --bg: #e8ece9;
+  --bg-soft: #fffef5;
+  --bg-inset: #dce3df;
+  --ink: #17272c;
+  --ink-dim: #617071;
+  --accent: #fffef5;
+  --accent-ink: #17272c;
+  --accent-2: #9aa7a5;
+  --border: #17272c;
+  --shadow: #17272c;
+  --check: rgba(23, 39, 44, 0.045);
   --code-bg: #22252a;
-}
-
-:root[data-theme='dark'] {
-  /* 告诉浏览器原生控件也走暗色：否则常驻滚动条和 <input type="search">
-     的清除按钮会在暗背景上渲染成亮色 */
-  color-scheme: dark;
-  --bg: #15181b;
-  --bg-soft: #1e2226;
-  --bg-inset: #101316;
-  --ink: #e3e7ea;
-  --ink-dim: #8b949c;
-  --accent: #e3e7ea;
-  --accent-ink: #15181b;
-  --accent-2: #6e7880;
-  --border: #e3e7ea;
-  --shadow: #000000;
-  --check: rgba(227, 231, 234, 0.03);
-  --code-bg: #0d0f12;
+  --hero-bg: #fffef5;
+  --hero-ink: #17272c;
+  --hero-muted: #617071;
+  --accent-label: '#FFFEF5';
 }
 
 /* 镜音（铃/连）：暖黄 */
@@ -68,6 +58,10 @@
   --shadow: #242118;
   --check: rgba(36, 33, 24, 0.035);
   --code-bg: #2a2618;
+  --hero-bg: #fff0c8;
+  --hero-ink: #2b2111;
+  --hero-muted: #756551;
+  --accent-label: '#FFC500';
 }
 
 /* 巡音（流歌）：樱粉 */
@@ -84,6 +78,10 @@
   --shadow: #261c20;
   --check: rgba(38, 28, 32, 0.035);
   --code-bg: #2b1e24;
+  --hero-bg: #ffe8ed;
+  --hero-ink: #321d27;
+  --hero-muted: #7b6069;
+  --accent-label: '#F2768F';
 }
 
 /* ---------- 像素阶梯切角（柔化直角，保持像素感） ---------- */
@@ -1268,5 +1266,462 @@ body.gallery-focus #gallery-hint {
   }
   .site-nav {
     margin-left: 0;
+  }
+}
+
+/* ============================================
+   VISUAL REFRESH · PIXEL WORKBENCH
+   更强的层级、留白和信息面板感，保留硬边像素语汇。
+   ============================================ */
+
+body {
+  background-image:
+    linear-gradient(var(--check) 1px, transparent 1px),
+    linear-gradient(90deg, var(--check) 1px, transparent 1px),
+    conic-gradient(var(--check) 0 25%, transparent 0 50%, var(--check) 0 75%, transparent 0);
+  background-size: 32px 32px, 32px 32px, 6px 6px;
+  background-attachment: fixed;
+}
+
+.container {
+  max-width: 1040px;
+}
+
+main {
+  padding-top: 56px;
+  padding-bottom: 96px;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  border-bottom: 0;
+  box-shadow: 0 3px 0 var(--accent), 0 7px 0 var(--border);
+}
+
+.site-header::before {
+  content: '';
+  display: block;
+  height: 5px;
+  background: repeating-linear-gradient(90deg, var(--accent) 0 14px, var(--accent-2) 14px 20px, transparent 20px 28px);
+}
+
+.site-header .container {
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 18px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.site-logo {
+  display: block;
+  position: relative;
+  letter-spacing: 1px;
+  box-shadow: 5px 5px 0 var(--shadow);
+}
+
+:root[data-theme='miku'] .site-logo {
+  clip-path: var(--cut-lg);
+}
+
+.site-nav {
+  justify-content: center;
+  gap: 6px;
+}
+
+.site-nav a {
+  position: relative;
+  padding: 6px 11px;
+  border-color: transparent;
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+
+.site-nav a::before {
+  content: '·';
+  margin-right: 5px;
+  color: var(--accent-2);
+}
+
+.site-nav a:hover,
+.site-nav a.is-active {
+  border-color: var(--border);
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 3px 3px 0 var(--shadow);
+}
+
+.site-nav a.is-active::before {
+  color: var(--accent-ink);
+}
+
+.theme-switcher {
+  gap: 5px;
+  align-items: center;
+  padding: 4px;
+  border: 2px solid var(--border);
+  background: var(--bg-inset);
+}
+
+.theme-switcher button {
+  width: 28px;
+  height: 28px;
+  border-width: 2px;
+  filter: none;
+}
+
+.theme-switcher button:nth-child(1) { background: #55e1cc; color: #071719; }
+.theme-switcher button:nth-child(2) { background: #ffc500; color: #3a2e00; }
+.theme-switcher button:nth-child(3) { background: #f2768f; color: #4a1220; }
+.theme-switcher button:nth-child(4) { background: #fffef5; color: #17272c; }
+
+.theme-switcher button.is-active {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.search-open {
+  padding-inline: 12px;
+  font-size: 0.8rem;
+}
+
+.pixel-card {
+  border-width: 3px;
+  filter: drop-shadow(7px 7px 0 var(--shadow));
+}
+
+.pixel-card--hover:hover {
+  transform: translate(-3px, -3px);
+  filter: drop-shadow(10px 10px 0 var(--accent));
+}
+
+.hero {
+  min-height: 330px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px;
+  align-items: center;
+  gap: 28px;
+  padding: 48px 50px;
+  margin-bottom: 68px;
+  background: var(--hero-bg);
+  color: var(--hero-ink);
+  box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.12);
+  filter: drop-shadow(9px 9px 0 var(--shadow));
+}
+
+.hero::before {
+  content: 'HYGX // PERSONAL LOG';
+  position: absolute;
+  left: 30px;
+  top: 18px;
+  color: var(--hero-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+}
+
+.hero::after {
+  content: 'ONLINE  ■  001';
+  position: absolute;
+  right: 34px;
+  bottom: 20px;
+  color: var(--hero-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+}
+
+.hero__eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 18px;
+  padding: 4px 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+}
+
+.hero__title {
+  max-width: 8ch;
+  margin-bottom: 20px;
+  font-size: clamp(1.55rem, 4vw, 2.55rem);
+  line-height: 1.3;
+  letter-spacing: -1px;
+}
+
+.hero__title .accent {
+  display: inline-block;
+  margin: 5px 0 0;
+  padding: 0 9px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 6px 0 0 var(--accent), -6px 0 0 var(--accent);
+}
+
+.hero__desc {
+  max-width: 42ch;
+  margin-bottom: 30px;
+  color: var(--hero-muted);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.hero__actions {
+  gap: 12px;
+}
+
+.hero__actions .pixel-btn {
+  border-color: var(--hero-ink);
+  background: var(--hero-ink);
+  color: var(--hero-bg);
+  filter: drop-shadow(4px 4px 0 var(--accent));
+}
+
+.hero__actions .pixel-btn:hover {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.hero__stats {
+  color: var(--hero-muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+
+.hero__pixels {
+  position: relative;
+  top: auto;
+  right: auto;
+  width: 150px;
+  height: 150px;
+  justify-self: end;
+  background:
+    linear-gradient(90deg, transparent 40%, var(--accent) 40% 60%, transparent 60%),
+    linear-gradient(0deg, transparent 40%, var(--accent) 40% 60%, transparent 60%);
+  background-size: 30px 30px;
+  border: 10px solid var(--hero-ink);
+  box-shadow: 10px 10px 0 var(--accent-2);
+  opacity: 0.95;
+}
+
+.hero__accent-code::after {
+  content: var(--accent-label);
+}
+
+.hero__pixels {
+  background: none;
+  border: 0;
+  box-shadow: 10px 10px 0 var(--accent-2);
+  opacity: 1;
+}
+
+.hero__pixels::before {
+  display: none;
+}
+
+.mondrian-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 10px solid var(--hero-ink);
+  background: var(--hero-bg);
+  image-rendering: pixelated;
+}
+
+.page-title {
+  position: relative;
+  padding: 9px 16px 9px 12px;
+  margin-bottom: 36px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+:root[data-theme='miku'] .page-title {
+  clip-path: var(--cut-lg);
+}
+
+.page-title::before {
+  content: '//';
+  margin-right: 8px;
+  font-family: var(--font-mono);
+  color: var(--accent-2);
+}
+
+.post-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+}
+
+.post-card {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  padding: 18px 20px 20px;
+}
+
+.post-card__cover {
+  height: 190px;
+  margin: 0 0 18px;
+  border-width: 3px;
+  background: var(--bg-inset);
+}
+
+.post-card__meta {
+  gap: 7px;
+  padding-bottom: 11px;
+  border-bottom: 2px dotted var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+
+.post-card__title {
+  margin-top: 15px;
+  font-size: 1.25rem;
+  line-height: 1.6;
+}
+
+.post-card__desc {
+  margin-bottom: 18px;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.8;
+}
+
+.post-card__footer {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 2px solid var(--bg-inset);
+}
+
+.post-card__more {
+  border-width: 2px;
+  background: var(--accent-2);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
+}
+
+.post-card__more:hover {
+  background: var(--accent);
+}
+
+.post-pager {
+  align-items: center;
+  margin-top: 36px;
+  border-top-color: var(--accent);
+}
+
+.site-footer {
+  border-top: 0;
+  box-shadow: inset 0 4px 0 var(--accent);
+}
+
+@media (max-width: 820px) {
+  .site-header .container {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .site-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .theme-switcher {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .search-open {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .hero {
+    grid-template-columns: minmax(0, 1fr) 120px;
+    padding: 42px 34px;
+  }
+
+  .hero__pixels {
+    width: 115px;
+    height: 115px;
+  }
+}
+
+@media (max-width: 640px) {
+  main {
+    padding-top: 40px;
+  }
+
+  .site-header .container {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .site-logo {
+    font-size: 0.82rem;
+  }
+
+  .theme-switcher {
+    grid-column: 2;
+  }
+
+  .search-open {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-self: start;
+  }
+
+  .site-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: calc(100vw - 40px);
+  }
+
+  .hero {
+    display: block;
+    min-height: 0;
+    padding: 42px 24px 34px;
+  }
+
+  .hero__pixels {
+    display: block;
+    width: 84px;
+    height: 84px;
+    margin: 30px 0 0 auto;
+    border-width: 7px;
+    box-shadow: 7px 7px 0 var(--accent-2);
+  }
+
+  .mondrian-art {
+    border-width: 7px;
+  }
+
+  .hero__pixels::before {
+    transform: scale(0.7);
+    transform-origin: top left;
+  }
+
+  .hero::after {
+    right: 24px;
+  }
+
+  .post-list {
+    grid-template-columns: 1fr;
+  }
+
+  .post-card__cover {
+    height: 170px;
   }
 }

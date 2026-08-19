@@ -1,0 +1,29 @@
+---
+/**
+ * 主题感知的蒙德里安式几何画。
+ * 颜色全部来自主题变量，切换主题时保留构图，只改变主色关系。
+ */
+---
+
+<svg
+  class="mondrian-art"
+  viewBox="0 0 180 180"
+  role="img"
+  aria-label="主题色几何画"
+  shape-rendering="crispEdges"
+>
+  <rect width="180" height="180" fill="var(--hero-bg)" />
+
+  <!-- 彩色画面块 -->
+  <rect x="0" y="0" width="68" height="58" fill="var(--accent)" />
+  <rect x="78" y="0" width="102" height="34" fill="var(--accent-2)" />
+  <rect x="78" y="44" width="45" height="65" fill="var(--accent)" />
+  <rect x="133" y="44" width="47" height="65" fill="var(--hero-bg)" />
+  <rect x="0" y="68" width="42" height="112" fill="var(--accent-2)" />
+  <rect x="52" y="120" width="71" height="60" fill="var(--accent)" />
+  <rect x="133" y="120" width="47" height="60" fill="var(--accent-2)" />
+
+  <!-- 粗黑分割线 -->
+  <path d="M68 0V180M0 58H180M0 68H180M42 68V180M52 108H180M123 44V180M0 120H180" fill="none" stroke="var(--hero-ink)" stroke-width="10" />
+  <path d="M78 0V108M133 108V180" fill="none" stroke="var(--hero-ink)" stroke-width="6" />
+</svg>

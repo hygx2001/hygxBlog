@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/PostCard.astro';
+import MondrianArt from '../components/MondrianArt.astro';
 import { getPublishedPosts, countBy, PAGE_SIZE } from '../utils/posts';
 import { SITE_DESCRIPTION } from '../consts';
 
@@ -13,8 +14,8 @@ const tagCount = countBy(posts, (p) => p.data.tags).length;
 
 <BaseLayout>
   <section class="hero pixel-card">
-    <span class="hero__pixels" aria-hidden="true"></span>
-    <p class="hero__eyebrow">// #39C5BB</p>
+    <div class="hero__pixels"><MondrianArt /></div>
+    <p class="hero__eyebrow">// <span class="hero__accent-code" aria-hidden="true"></span></p>
     <h1 class="hero__title">HYGX<span class="accent">BLOG</span></h1>
     <p class="hero__desc">{SITE_DESCRIPTION}——记录一些有趣的东西。</p>
     <div class="hero__actions">
