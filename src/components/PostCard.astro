@@ -1,6 +1,5 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import PixelCover from './PixelCover.astro';
 import { readingTime } from '../utils/posts';
 import { getAttachmentSizeAttrs } from '../utils/image-size.mjs';
 
@@ -18,17 +17,15 @@ const coverSize = cover ? await getAttachmentSizeAttrs(cover) : {};
 
 <article class="pixel-card pixel-card--hover post-card">
   {
-    cover
-      ? <img
-          class="post-card__cover"
-          src={`/attachments/${cover}`}
-          {...coverSize}
-          loading={eager ? 'eager' : 'lazy'}
-          decoding={eager ? 'sync' : 'async'}
-          fetchpriority={eager ? 'high' : undefined}
-          alt=""
-        />
-      : <PixelCover class="post-card__cover" seed={post.id} />
+    cover && <img
+      class="post-card__cover"
+      src={`/attachments/${cover}`}
+      {...coverSize}
+      loading={eager ? 'eager' : 'lazy'}
+      decoding={eager ? 'sync' : 'async'}
+      fetchpriority={eager ? 'high' : undefined}
+      alt=""
+    />
   }
   <div class="post-card__meta">
     {pinned && <span class="pixel-tag pixel-tag--pinned">置顶</span>}

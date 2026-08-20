@@ -588,7 +588,7 @@ a.pixel-tag:hover {
 .post-content img {
   display: block;
   /* 配合 <img> 上的 width/height：height:auto 让浏览器按宽高比预留空间（消除 CLS），
-     max-width 兜住比正文栏宽的图。缺任一条，尺寸属性反而会把图撑到原始像素宽。 */
+     构建期已把本地图片等比限制在 720×560 内；这里负责移动端继续收窄。 */
   max-width: 100%;
   height: auto;
   margin: 20px auto;

@@ -9,6 +9,17 @@
 import { getAttachmentSize } from '../utils/image-size.mjs';
 
 const ATTACHMENTS_BASE = '/attachments/';
+const DEFAULT_MAX_WIDTH = 720;
+const DEFAULT_MAX_HEIGHT = 560;
+
+/** 在不放大、不裁切的前提下，把图片缩进统一的正文展示边界。 */
+function fitWithin(width, height, maxWidth = DEFAULT_MAX_WIDTH, maxHeight = DEFAULT_MAX_HEIGHT) {
+  const scale = Math.min(1, maxWidth / width, maxHeight / height);
+  return {
+    width: Math.round(width * scale),
+    height: Math.round(height * scale),
+  };
+}
 
 /**
  * 每次调用新建，不用模块级常量。
@@ -94,20 +105,19 @@ export function remarkObsidianImages() {
       }
     });
 
-    // 补固有尺寸 + 懒加载。正文图片是全站唯一没有被 CSS 锁定盒子的地方，
-    // 不给 width/height 每张图解码时都会把下方内容顶一次。
+    // 补展示尺寸 + 懒加载。尺寸保持原始比例并限制在 720×560 内，既消除 CLS，
+    // 也避免超大截图占满整个正文；移动端仍会由 CSS 继续等比缩小。
     await Promise.all(
       localImages.map(async (node) => {
         const dims = await getAttachmentSize(node.url);
         const hProperties = { ...node.data?.hProperties };
         if (dims) {
-          // 作者用 |300 显式指定过宽度时以他为准，高度按原始比例换算，避免变形
-          if (hProperties.width) {
-            hProperties.height = Math.round((hProperties.width / dims.width) * dims.height);
-          } else {
-            hProperties.width = dims.width;
-            hProperties.height = dims.height;
-          }
+          // 作者用 |300 指定的是期望宽度；全局上限仍然生效，避免单篇文章破坏版式。
+          const requestedWidth = hProperties.width ? Number(hProperties.width) : dims.width;
+          const requestedHeight = (requestedWidth / dims.width) * dims.height;
+          const fitted = fitWithin(requestedWidth, requestedHeight);
+          hProperties.width = fitted.width;
+          hProperties.height = fitted.height;
         }
         hProperties.loading = 'lazy';
         hProperties.decoding = 'async';
